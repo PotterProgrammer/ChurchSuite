@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+
+<html>
+<head>
+	<link rel="stylesheet" href="/scheduler/site.css">
+</head>
+
+<style>
+.loginForm div
+{
+    display:grid;
+    grid-template-columns: 40% max-content;
+    grid-gap: 5px;
+	line-height: 1.2em;
+}
+
+.loginForm label
+{
+	text-align: right;
+}
+
+.form-control
+{
+	height: 1.2em;
+	margin-bottom: 1.2em;
+}
+
+.loginForm .error
+{
+	display: block;
+	color: red;
+	text-align: center;
+}
+
+</style>
+
+<body>
+	<div id="xoverlay">
+
+		<h1>Directory</h1>
+		<div  class="loginForm">
+			<form method="post" action='/directory/login'>
+				<div>
+				<label for="user">Login Name:</label>
+				<input class="form-control" id="user" name="user" type="text" size="40" autofocus />
+				<label for="password">Password:</label>
+				<input class="form-control" id="password" name="password" type="password" size="40" />
+				</div>
+				<input class="btn btn-primary" type="submit" value="Sign In">
+				<br/>  <br/>
+			</form>
+
+			% if (defined( flash 'error') ) {
+				<div class="error">
+					<center><b> <%= flash 'error' %> </b></center>
+				</div>
+			%}
+		</div>
+
+	</div>
+</body>
+</html>
+

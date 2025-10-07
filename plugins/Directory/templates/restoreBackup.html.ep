@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+
+<html>
+<head>
+	<link rel="stylesheet" href="/directory/site.css">
+</head>
+
+<script src="/common/loadNav.js"> </script>
+
+
+<body>
+	<div id="navbar">
+	</div>
+
+	<h1>Restore from Backup</h1>
+
+	<div id="confirmRestore">
+		<p>This process will restore the directory environment (including photos, information, administrtors and settings) to the state that it was in when the backup file was created.</p>
+		<p>Note that this will erase <b><u>all</u></b> currently entered information, replacing it with the contents of the backup file!</p>
+		<p>Are you sure you wish to continue?</p>
+		<br>
+		<div id="buttonRow">
+			<input type="submit" name="submit" id="submitbtn" class="submitbtn" value="Yes" onclick="document.getElementById('filename').click();">
+			<input type="submit" formnovalidate name="submit" id="resetbtn" class="resetbtn" value="No" onclick="window.location='/directory/admin'">
+		</div>
+		<form action = "/directory/restore" method="post" enctype="multipart/form-data" hidden>
+			<input id="filename" type="file" name="filename" onchange="document.getElementById('sendBackup').click();" hidden/>
+			<button id="sendBackup" type="submit" hidden/>
+		</form>
+	</div>
+</body>
+
+</html>

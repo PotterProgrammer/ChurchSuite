@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+
+<html>
+<head>
+	<link rel="stylesheet" href="/directory/site.css">
+</head>
+
+<script src="/common/loadNav.js"> </script>
+
+
+<body>
+	<div id="navbar">
+	</div>
+
+	<h1>Automatically Welcome New Users</h1>
+
+	<div id="confirmRestore">
+		<p>The directory can automatically send a "Welcome to the Directory" email to new users whenever they are added.  Alternately, you
+		   can manually send out emails at one time to all members who have not yet signed into the directory.  Most of the time
+		   you will probably want this feature enabled.  However, when setting up the directory for the first time, you might wish to turn
+		   off this feature until all the entries have been added (so that the first people to view the directory don't see a nearly
+		   empty directory.</p>
+		<p>This feature can be turned on or off at any time.</p>
+		<br>
+		<form action = "/directory/autoWelcome" method="post" enctype="multipart/form-data">
+			<center>
+			<input type="checkbox" id="autoWelcome" name="autoWelcome" <%= ($autoWelcome) ? 'checked' : '' %> />
+			<label for="autoWelcome">Send automatic welcome email.</label>
+			<br><br>
+			<button id="sendBackup" type="submit">Save Change</button>
+			</center
+		</form>
+	</div>
+</body>
+
+</html>

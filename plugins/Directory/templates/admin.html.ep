@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<link rel="stylesheet" href="/directory/site.css">
+</head>
+
+<script src="/common/Dialog.js"></script>
+<script src="/common/loadNav.js"> </script>
+
+<script>
+	%if ( defined( stash( 'textMessage')))
+	%{
+	window.addEventListener( "pageshow", function () {
+		Dialog.Notify( { title: "<%= stash( 'title') %>", text: "<%= stash( 'textMessage') %>", showFor: <%= stash( 'showFor') %>});
+	});
+    %}
+
+</script>
+
+<body>
+	<div id="navbar">
+	</div>
+
+	<h1>Directory Administration</h1>
+
+</body>
+

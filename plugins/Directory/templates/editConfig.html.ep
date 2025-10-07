@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<link rel="stylesheet" href="/directory/site.css">
+</head>
+
+<script src="/common/loadNav.js"> </script>
+
+<body>
+	<div id="navbar">
+	</div>
+
+	<h1>System Settings</h1>
+	<p id="settingInstructions">
+		Excercise caution when modifying the values below as incorrect values may stop the system from working properly.  When you are finished, press <b>Save</b> to save your changes, or <b>Cancel</b> to ignore the changes and return to the main menu.
+	</p>
+
+	<section id="container">
+	<form id="OneConfig-form" action="<%= url_for('/saveConfig')->to_abs %>" method="post">
+		<div id="wrapping" >
+			<table class="cfgTable">
+			<tr><td class="cfgHead"><b>Gmail Settings:</b></td></tr>
+			<td  class="cfgLeft"><label for="EmailServer">EmailServer:</label></td><td class="cfgRight"><input type="text" id="EmailServer" name="EmailServer" value="<%= $config->{EmailServer} %>"  title="Email outgoing (SMTP) server address" class="cfginput"><br></td></tr>
+			<td class="cfgLeft"><label for="EmailPort">EmailPort:</label></td><td><input type="text" id="EmailPort" name="EmailPort" value="<%= $config->{EmailPort} %>"  title="Email port number" class="cfginput"><br></td></tr>
+			<td class="cfgLeft"><label for="EmailUID">EmailUID:</label></td><td><input type="text" id="EmailUID" name="EmailUID" value="<%= $config->{EmailUID} %>"  title="Email account" class="cfginput"><br></td></tr>
+			<td class="cfgLeft"><label for="EmailPWD">EmailPWD:</label></td><td><input type="text" id="EmailPWD" name="EmailPWD" value="<%= $config->{EmailPWD} %>"  title="Email password" class="cfginput"><br></td></tr>
+			<td class="cfgLeft"><label for="DirectoryEmailSender">EmailSender:</label></td><td><input type="text" id="DirectoryEmailSender" name="DirectoryEmailSender" value="<%= $config->{DirectoryEmailSender} %>"  title="Name email is sent from" class="cfginput"><br></td></tr>
+
+			<tr><td class="cfgHead"><b>Twilio Settings:</b></td></tr>
+			<td class="cfgLeft"><label for="TwilioAcct">TwilioAcct:</label></td><td><input type="text" id="TwilioAcct" name="TwilioAcct" value="<%= $config->{TwilioAcct} %>"  title="Twilio Account number" class="cfginput"><br></td></tr>
+			<td class="cfgLeft"><label for="TwilioAuth">TwilioAuth:</label></td><td><input type="text" id="TwilioAuth" name="TwilioAuth" value="<%= $config->{TwilioAuth} %>"  title="Twilio authorization code" class="cfginput"><br></td></tr>
+			<td class="cfgLeft"><label for="TwilioPhone">TwilioPhone:</label></td><td><input type="tel" id="TwilioPhone" name="TwilioPhone" value="<%== $config->{TwilioPhone} %>"  title="Registered Twilio phone number that messages are sent from." class="cfginput"><br></td></tr>
+
+			<tr><td class="cfgHead"><b>Administrator Contact Info:</b></td></tr>
+			<td class="cfgLeft"><label for="DirectoryAdminName">Admin Name:</label></td><td><input type="text" id="DirectoryAdminName" name="DirectoryAdminName" value="<%= $config->{DirectoryAdminName} %>"  title="This is the name of the directory administrator." class="cfginput"><br></td></tr>
+			<td class="cfgLeft"><label for="DirectoryAdminEmail">Admin Email:</label></td><td><input type="email" id="DirectoryAdminEmail" name="DirectoryAdminEmail" value="<%= $config->{DirectoryAdminEmail} %>"  title="This is the phone number of the directory administrator." class="cfginput"><br></td></tr>
+			<td class="cfgLeft"><label for="DirectoryAdminPhone">Admin Phone:</label></td><td><input type="text" id="DirectoryAdminPhone" name="DirectoryAdminPhone" value="<%= $config->{DirectoryAdminPhone} %>"  title="This is the phone number of the directory administrator." class="cfginput"><br></td></tr>
+			<td class="cfgLeft"><label for="DirectoryAdminText">Admin Text:</label></td><td><input type="text" id="DirectoryAdminText" name="DirectoryAdminText" value="<%= $config->{DirectoryAdminText} %>"  title="This is the text number of the directory administrator." class="cfginput"><br></td></tr>
+
+			<tr><td class="cfgHead"><b>Directory Access Location:</b></td></tr>
+			<td class="cfgLeft"><label for="DirectoryAccessURL">Directory URL:</label></td><td><input type="text" id="DirectoryAccessURL" name="DirectoryAccessURL" value="<%= $config->{DirectoryAccessURL} %>"  title="This is URL used to access Directory (e.g. http://ourchurch.org/directory)." class="cfginput"><br></td></tr>
+
+			</table>
+
+			<div id="buttonRow">
+				<input type="submit" name="submit" id="submitbtn" class="submitbtn" value="Save">
+				<input type="submit" formnovalidate name="submit" id="resetbtn" class="resetbtn" value="Cancel">
+			</div>
+		</div>
+	</form>
+</body>
+</html>
+

@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+	<script src="/common/Dialog.js"> </script>
+	<link rel="stylesheet" href="/directory/site.css">
+</head>
+
+
+<script src="/common/loadNav.js"> </script>
+
+<script>
+
+const UPLOAD_PHOTO = "uploadPhoto.png";
+
+let form;
+
+document.addEventListener('DOMContentLoaded', refreshScreen);
+
+
+//------------------------------------------------------------------------------
+//  function refreshScreen()
+//------------------------------------------------------------------------------
+function refreshScreen()
+{
+    form = document.getElementById('photoUpload');
+    form.addEventListener('submit', sendPhoto);
+    document.getElementById( 'firstName').value = "";
+    document.getElementById( 'lastName').value = "";
+    document.getElementById( 'address').value = "";
+    document.getElementById( 'city').value = "";
+    document.getElementById( 'zip').value = "";
+    document.getElementById( 'phone').value = "";
+    document.getElementById( 'cell').value = "";
+    document.getElementById( 'email').value = "";
+    document.getElementById( 'memberPhoto').src = UPLOAD_PHOTO;
+    document.getElementById( 'memberNames').selectedIndex = -1;
+    disableEditMemberButtons();
+}
+
+//------------------------------------------------------------------------------
+//  function pickedAName()
+//------------------------------------------------------------------------------
+function pickedAName()
+{
+    let list = document.getElementById( 'memberNames');
+    let selectedIndex = list.selectedIndex;
+    let item = list.options[selectedIndex];
+    let id = item.value;
+    
+    getMemberInfo( id).then( reply => {
+        document.getElementById( 'firstName').value = reply.firstName;
+        document.getElementById( 'lastName').value = reply.lastName;
+        document.getElementById( 'address').value = reply.address;
+        document.getElementById( 'city').value = reply.city;
+        document.getElementById( 'zip').value = reply.zip;
+        document.getElementById( 'phone').value = reply.phone;
+        document.getElementById( 'cell').value = reply.cell;
+        document.getElementById( 'email').value = reply.email;
+        if ( reply.photo === undefined || reply.photo == "" || reply.photo == null)
+        {
+            reply.photo = UPLOAD_PHOTO;
+        }
+        document.getElementById( 'memberPhoto').src = reply.photo;
+
+        enableEditMemberButtons();
+    });
+}
+
+//------------------------------------------------------------------------------
+//  async function getMemberInfo( id)
+//      This function looks up the member information for a given ID.
+//------------------------------------------------------------------------------
+async function getMemberInfo( id)
+{
+    //
+    //  Call server to get info for this person
+    //
+    var ws;
+    var url = 'ws://' + window.location.host + '/directory/getPersonalInfo';
+    if ( window.location.protocol == 'https:')
+    {
+        url = 'wss://' + window.location.host + '/directory/getPersonalInfo';
+    }
+
+    let personalTag = '{"tag" : "' + id + '", "formatted" : false }';
+    var promise = new Promise( (resolve, reject)=>
+        {
+            ws = new WebSocket( url);
+
+            ws.onopen = (event) => 
+            {
+                ws.send( personalTag);
+            };
+
+            ws.onerror = (event) =>
+            {
+                ws.close();
+                ws = new WebSocket( url);
+                ws.onopen = (event) => 
+                {
+                    ws.send( personalTag);
+                };
+            };
+
+            ws.onmessage = (msg) =>
+            {
+                ws.close();
+                let reply = JSON.parse( msg.data);
+                resolve( reply);
+            };
+
+        });
+
+    info = await promise;
+    return info;
+}
+
+
+//------------------------------------------------------------------------------
+//  function enableEditMemberButtons()
+//------------------------------------------------------------------------------
+function enableEditMemberButtons()
+{
+    let list=document.getElementsByClassName('editMemberButton');
+    for (const button of list)
+    {
+        button.disabled = false;
+    }
+}
+
+//------------------------------------------------------------------------------
+//  function disableEditMemberButtons()
+//------------------------------------------------------------------------------
+function disableEditMemberButtons()
+{
+    let list=document.getElementsByClassName('editMemberButton');
+    for (const button of list)
+    {
+        button.disabled = true;
+    }
+}
+
+//------------------------------------------------------------------------------
+//  function editPhoto( event)
+//      This function either starts photo selection or asks how to deal with
+//      current photo.
+//------------------------------------------------------------------------------
+function editPhoto( event)
+{
+    let memberPhoto = document.getElementById( 'memberPhoto');
+    if ( memberPhoto.src.endsWith( UPLOAD_PHOTO))
+    {
+        setPhoto( event);
+    }
+    else
+    {
+        document.getElementsByTagName('photo')[0].addEventListener("mouseleave", (event) => { hideFauxButtons()});
+        showFauxButtons();
+    }
+}
+
+//------------------------------------------------------------------------------
+//  function resetPhoto()
+//      This function removes the prior photo.
+//------------------------------------------------------------------------------
+function resetPhoto()
+{
+    let memberPhoto = document.getElementById( 'memberPhoto');
+    memberPhoto.src = UPLOAD_PHOTO;
+    hideFauxButtons();
+}
+
+//------------------------------------------------------------------------------
+//  function showFauxButtons()
+//------------------------------------------------------------------------------
+function showFauxButtons()
+{
+    let buttons = document.getElementsByClassName( 'editPhotoChoice');
+    for ( const button of buttons)
+    {
+        button.style.visibility = 'visible';
+    }
+}
+
+//------------------------------------------------------------------------------
+//  function hideFauxButtons()
+//------------------------------------------------------------------------------
+function hideFauxButtons()
+{
+    let buttons = document.getElementsByClassName( 'editPhotoChoice');
+    for ( const button of buttons)
+    {
+        button.style.visibility = 'hidden';
+    }
+}
+
+
+//------------------------------------------------------------------------------
+//  function setPhoto( event)
+//------------------------------------------------------------------------------
+function setPhoto( event)
+{
+    hideFauxButtons();
+    let browseFile = document.getElementById( 'poke');
+    browseFile.click();
+}
+
+//------------------------------------------------------------------------------
+//  function sendPhoto( event)
+//      This function handles submitting the selected photo for storage.
+//------------------------------------------------------------------------------
+function sendPhoto(event) 
+{
+    hideFauxButtons();
+    const url = new URL(form.action);
+    const formData = new FormData(form);
+
+    /** @type {Parameters<fetch>[1]} */
+    const fetchOptions = {
+                            method: form.method,
+                            body: formData,
+                         };
+
+
+    fetch(url, fetchOptions)
+        .then( response => response.json())
+        .then( data => {
+               let memberPhoto = document.getElementById( 'memberPhoto');
+               memberPhoto.src = data.photo;
+               });
+
+
+    event.preventDefault();
+}
+
+//------------------------------------------------------------------------------
+//  function addMember( event)
+//      This function sends new member information to the server
+//------------------------------------------------------------------------------
+function addMember(event) 
+{
+    let obj = getFormInfo();
+
+    if ( obj === undefined)
+    {   
+        return;
+    }
+
+    const fetchOptions = {
+                            method: "POST",
+                            body:  JSON.stringify( obj)
+                         };
+
+    let url = "/directory/addNewMember";
+
+    fetch( url, fetchOptions)
+        .then( response => response.json())
+        .then( data => {
+               Dialog.Notify( { title: "Added", text: obj.firstName + " " + obj.lastName, showFor: 1000 }).then( ()=>
+               	{
+					window.location.reload();
+				});
+             });
+
+}
+
+//------------------------------------------------------------------------------
+//  function updateMember( event)
+//      This function sends new member information to the server
+//------------------------------------------------------------------------------
+function updateMember(event) 
+{
+    let obj = getFormInfo();
+
+    if ( obj === undefined)
+    {
+        return;
+    }
+
+    //
+    //  Get the ID of the selected member
+    //
+    let list = document.getElementById( 'memberNames');
+    let selectedIndex = list.selectedIndex;
+    let item = list.options[selectedIndex];
+    let id = item.value;
+    
+    //
+    //  Add the selected ID to the object to be sent
+    //
+    obj.loginId = id;
+
+    const fetchOptions = {
+                            method: "POST",
+                            body:  JSON.stringify( obj)
+                         };
+
+    let url =  "/directory/updateMember";
+
+    fetch( url, fetchOptions)
+        .then( response => response.json())
+        .then( data => {
+               Dialog.Notify( { title: "Updated", text: obj.firstName + " " + obj.lastName, showFor: 1500 }).then( ()=>
+               {
+                   window.location.reload();
+               });
+             });
+
+}
+
+//------------------------------------------------------------------------------
+//  function removeMember()
+//------------------------------------------------------------------------------
+function removeMember()
+{
+    let list = document.getElementById( 'memberNames');
+    let selectedIndex = list.selectedIndex;
+    let item = list.options[selectedIndex];
+    let id = item.value;
+    
+    getMemberInfo( id).then( reply => {
+
+        Dialog.Confirm( {title: "Remove Directory Member", text: "Are you sure you want to remove\n<memberName>" + reply.firstName + " " + reply.lastName + "</memberName>\nfrom the directory?"}).then( (answer) =>
+            {
+                if ( answer)
+                {
+                    const fetchOptions = {
+                                            method: "POST",
+                                            body:  '{ "loginId": "' + id + '"}'
+                                         };
+
+                    let url =  "/directory/removeMember";
+
+                    fetch( url, fetchOptions)
+                        .then( response => response.json())
+                        .then( data => {
+                               Dialog.Notify( { title: "Removed", text: reply.firstName + " " + reply.lastName, showFor: 1500 }).then( ()=>
+                               {
+                                   window.location.reload();
+                               });
+                             });
+                }
+            });
+        });
+}
+
+
+//------------------------------------------------------------------------------
+//  function getFormInfo()
+//      This function pulls the member information from the form and returns it
+//      as an object.
+//------------------------------------------------------------------------------
+function getFormInfo()
+{
+    let form = document.getElementById( 'memberInfoForm');
+    const formData = new FormData(form);
+    let obj = Object.fromEntries( Array.from(formData.keys())
+                                  .map(key => [ key, formData.getAll(key).length > 1 ? 
+                                                formData.getAll(key) : formData.get(key)
+                                              ]));
+
+    if ( obj.firstName == "")
+    {
+        document.getElementById( "firstName").focus();
+        Dialog.Alert( { title: "Missing Information!", text: "You must specify a first name!"});
+        return;
+    }
+
+    if ( obj.lastName == "")
+    {
+        document.getElementById( "lastName").focus();
+        Dialog.Alert( { title: "Missing Information!", text: "You must specify a last name!"});
+        return;
+    }
+
+    let memberPhoto = document.getElementById( 'memberPhoto');
+    if ( !memberPhoto.src.endsWith( UPLOAD_PHOTO))
+    {
+        obj.photo = memberPhoto.src.replace( /.*\/directory\/Photos/, "/directory/Photos");
+    }
+	else
+	{
+		obj.photo = null;
+	}
+
+    return obj;
+}
+
+
+</script>
+
+<body>
+  <div id="navbar">
+  </div>
+  
+  
+  <TheTitle>Edit Directory</TheTitle>
+  
+  
+  <uploadform>
+      <form id="photoUpload" action="/directory/uploadPhoto" method="post" enctype="multipart/form-data">
+          <input id="imageFile" type="file" name="imageFile" onchange="console.log( 'BEEP');document.getElementById('photoUpload').requestSubmit();" />
+          <input id="bob" type="submit" />
+      </form>
+  </uploadform>
+  
+  <div id="page">
+    <namesList>
+      <select id="memberNames" size="23" onchange="pickedAName()" >
+        %my @sortedNames = sort { $members->{$a}->{lastName}. $members->{$a}->{firstName} cmp $members->{$b}->{lastName} . $members->{$b}->{firstName}} keys( %{$members});
+        %foreach my $id ( @sortedNames)
+        %{
+          <option value="<%= $id %>"><%= $members->{$id}->{firstName}%> <%=$members->{$id}->{lastName} %></option>
+        %}
+      </select>
+    </namesList>
+    <div id="dataEntry">
+    <form id="memberInfoForm" action="/addNewMember" method="post">
+      <photo>
+          <img id="memberPhoto" src="uploadPhoto.png" onclick="editPhoto()">
+          <fauxbutton class="editPhotoChoice" id="pickPhoto"><label id="poke" for="imageFile">Choose new photo</label></fauxbutton>
+          <fauxbutton class="editPhotoChoice" id="deletePhoto" onclick="resetPhoto();">Delete this photo</fauxbutton>
+      </photo>
+      <br>
+      <div id="formInfo">
+          <label class="infoLabel"  for="firstName">First Name:</label>
+          <input type="text" id="firstName" name="firstName" required autofocus></input>
+  
+          <label class="infoLabel"  for="lastName">Last Name:</label>
+          <input type="text" id="lastName" name="lastName" required></input>
+        
+          <label class="infoLabel"  for="address">Address:</label>
+          <input type="text" id="address" name="address"></input>
+          
+          <label class="infoLabel"  for="city">City:</label>
+          <input type="text" id="city" name="city"></input>
+          
+          <label class="infoLabel"  for="zip">Zip:</label>
+          <input type="text" id="zip" name="zip"></input>
+          
+          <label class="infoLabel"  for="phone">Phone number:</label>
+          <input type="tel" id="phone" name="phone" pattern="[0-9]{3}-[0-9]{3}-[0-9]{4}"></input>
+          
+          <label class="infoLabel"  for="cell">Cell number:</label>
+          <input type="tel" id="cell" name="cell" pattern="[0-9]{3}-[0-9]{3}-[0-9]{4}"></input>
+          
+          <label class="infoLabel"  for="email">Email address:</label>
+          <input type="email" id="email" name="email"></input>
+       </div>
+    </form>
+        <br>
+        <div>
+            <button onclick="addMember()">Add New Member</button> 
+            <button class="editMemberButton" onClick="updateMember()"  disabled>Update Member</button>
+            <button class="editMemberButton" onClick="removeMember()"  disabled>Remove Member</button>
+        </div>
+    </div>
+  </div>
+</body>
+</html>
+

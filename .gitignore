@@ -1,0 +1,15 @@
+RCS
+old_*
+safe/
+tags
+test/
+testing/
+*.swp
+*.vim
+*.db
+*.json
+*.backup
+my_crontab
+sync*
+*.cfg
+resetPwdTest

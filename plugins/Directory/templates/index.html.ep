@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<head>
+
+<link rel="stylesheet" href="/directory/site.css">
+
+<script>
+function showInfoFor( slide, personalTag)
+{
+		let infoBox = document.getElementById( 'infoBox');
+
+		if ( slide == infoBox.slide)
+		{
+			infoBox.style.display = 'block';
+			return;
+		}
+
+		//
+		//  Remember who called us
+		//
+		infoBox.slide = slide;
+		infoBox.personalTag = personalTag;
+        let photoHolder = slide.getElementsByClassName( 'photoHolder')[0];
+		let position = photoHolder.getBoundingClientRect();
+		let boxTop = slide.offsetTop;
+		let boxLeft = position.left;
+		let boxRight = position.right;
+		let boxHeight = position.bottom - position.top;
+
+
+		//
+		//  Position the info box
+		//
+		infoBox.style.left = boxLeft + 30 + "px";
+		infoBox.style.width = boxRight - boxLeft - 70 + "px";
+
+		//
+		//  Call server to get info for this person
+		//
+		var ws;
+		var url = 'ws://' + window.location.host + '/directory/getPersonalInfo';
+		if ( window.location.protocol == 'https:')
+		{
+			url = 'wss://' + window.location.host + '/directory/getPersonalInfo';
+		}
+
+		ws = new WebSocket( url);
+
+		ws.onopen = (event) => 
+		{
+			ws.send( '{"tag" : "' + personalTag + '"}');
+		};
+
+		ws.onerror = (event) =>
+		{
+			ws.close();
+			ws = new WebSocket( url);
+			ws.onopen = (event) => 
+			{
+				ws.send( personalTag);
+			};
+		};
+
+		ws.onmessage = (msg) =>
+		{
+			infoBox.innerHTML = msg.data;
+			infoBox.style.display = 'block';
+			let size = infoBox.scrollHeight;
+			infoBox.style.top = boxTop + boxHeight - size + "px";
+			infoBox.style.height = size + "px";
+			ws.close();
+		};
+}
+
+function hideInfo()
+{
+		let infoBox = document.getElementById( 'infoBox');
+		infoBox.style.display='none';
+		infoBox.slide = 0;
+}
+
+function copyInfo()
+{	
+	let infoBox = document.getElementById( 'infoBox');
+	let text = infoBox.innerText;
+	navigator.clipboard.writeText( text);
+
+}
+</script>
+
+</head>
+
+<html>
+<nav>
+	<a href="/directory/index"><img src="/directory/DirectoryIcon.png"></a>
+	<a class="filler">&nbsp;</a>
+	<div class="submenu" id="gearMenu">
+		<span class="submenuButton">
+			<img id="gear" src="/directory/images/gear64.png">
+		</span>
+		<div class="submenuContent rightEdge">
+			<a href="/directory/editMe?user=<%= $loginId %>">Edit My Information</a>
+			<a href="/directory/logoff">Log off</a>
+		</div>
+	</div>
+</nav>
+
+<TheTitle>Directory</TheTitle>
+
+
+<div style="position:relative">
+
+	<div id="infoBox" onmouseenter="showInfoFor( this.slide, this.personalTag)">
+		This is a placeholder for member info
+	</div>
+
+% my @names = keys( %{$members});
+% @names = sort { "$members->{$a}->{lastName} $members->{$a}->{firstName}"  cmp "$members->{$b}->{lastName} $members->{$b}->{firstName}"} @names;
+
+%foreach my $person (@names)
+%{
+<div class="picture" onmouseenter="showInfoFor(this, '<%= $person %>')" onmouseleave="hideInfo()">
+        <div class="photoHolder">
+        %$members->{$person}->{photo} = $members->{$person}->{photo} // '/directory/NoPhotoAvailable2.jpg';
+		<img src="<%= $members->{$person}->{photo} %>"/>
+        </div>
+		<photoCaption><%= "$members->{$person}->{firstName} $members->{$person}->{lastName}" %></photoCaptiion>
+	</div>
+%}
+
+</div>
+</html>

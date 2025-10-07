@@ -1,0 +1,974 @@
+#!/usr/bin/perl
+
+
+use warnings;
+use strict;
+
+use Data::Dumper;
+
+use JSON;
+
+use lib "./";
+use lib "./plugins";
+
+use Common::CS_Config;
+
+use Directory::BackupRestore;
+use Directory::Members;
+use Directory::Messaging;
+
+use File::Copy;
+use Mojolicious::Lite;
+
+
+my $members;
+my $membersFile = './members.json';
+my $membersFileBackup = './members.json.backup';
+
+#main:
+{
+	#------------------------------------------------------------------------------
+	#  get '/login' -- This is the main login screen
+	#------------------------------------------------------------------------------
+	get '/login' => sub
+	{
+		my $self = shift( @_);
+
+		$self->render( '/login');
+	};
+
+	#------------------------------------------------------------------------------
+	#  post '/login' -- This screen processes the login entry
+	#------------------------------------------------------------------------------
+	post '/login' => sub
+	{
+		my $self = shift;
+		my $username = $self->param( 'user');
+		my $password = $self->param( 'password');
+
+print "Got login request for $username/$password\n";
+
+		##
+		##  See if this userId/password is defined
+		##
+		my $memberInfo = lookupUser( $username, $password);
+
+		if ( defined( $memberInfo))
+		{
+		print "Found it!\n";
+			my $cookie = Mojo::Cookie::Response->new( name=>'UID', value=>$memberInfo->{UID}, expires=>time() + 3600);
+			$self->res->cookies( $cookie);
+			my $lastCall = $self->session->{lastCall};
+			print "Its: $lastCall\n";
+			$lastCall =~ s/^\/directory//;
+			if ( defined( $lastCall) and length( $lastCall))
+			{
+				print "Redirecting to $lastCall\n";
+##-->				$self->redirect_to( $self->session->{lastCall});
+				$self->redirect_to( $lastCall);
+			}
+			else
+			{
+				print "Rendering \/\n";
+				$self->redirect_to( '/');
+			}
+		}
+		else
+		{
+			$self->flash( error=> 'Invalid login name or password!');
+			$self->redirect_to( '/login');
+		}
+	};
+
+	#------------------------------------------------------------------------------
+	#  get '/logoff' 
+	#------------------------------------------------------------------------------
+	get '/logoff' => sub
+	{
+		my $self = shift;
+		my $cookie = Mojo::Cookie::Response->new( name=>'UID', value=> '', expires=>1);
+		$self->res->cookies( $cookie);
+
+		$self->redirect_to( '/login');
+	};
+
+	#------------------------------------------------------------------------------
+	#  get '/setPassword' 
+	#------------------------------------------------------------------------------
+	get '/setPassword' => sub
+	{
+		my $self = shift( @_);
+
+		if ( defined( $self->session->{user}) && defined( $self->session->{UID}))
+		{
+			$self->stash( loginId => $self->session->{user});
+			$self->render( 'setPassword');
+		}
+		else
+		{
+			$self->redirect_to( 'not_found');
+		}
+	};
+
+	#------------------------------------------------------------------------------
+	#  post '/setPasssword' -- This screen processes a reset password request
+	#------------------------------------------------------------------------------
+	post '/setPassword' => sub
+	{
+		my $self = shift;
+		my $password = $self->param( 'password');
+		my $password2 = $self->param( 'password2');
+
+print "Got password reset request for " .$self->session('user') . "\n";
+
+		if ( defined( $self->session( 'user')) && defined( $self->session( 'UID')))
+		{
+			##
+			##  See if this userId/password is defined
+			##
+			my $memberInfo = getUserInfo( $self->session( 'user'), $self->session( 'UID'));
+
+			if ( defined( $memberInfo))
+			{
+				##
+				##  Verify that the provided passwords match
+				##
+				if ( $password eq $password2)
+				{
+					$memberInfo->{loginId} = $self->session('user');
+					$memberInfo->{password} = $password;
+
+					print "USER=" . $self->session->{user} . "\n";
+					print "Deleting...\n";
+					delete $self->session->{'user'};
+
+					print "\n\nWriting:\n\t" . Dumper( $memberInfo) . "\n\n";
+					writeMemberInfo( $memberInfo);
+					$self->redirect_to( '/');
+				}
+				else
+				{
+					$self->stash( loginId => $self->session->{user});
+					$self->flash( error=> "Passwords don't match! Please try again.");
+##-->					$self->render( 'setPassword');
+					$self->redirect_to( 'setPassword');
+				}
+			}
+			else
+			{
+				print "Got bad password reset request!!!\n";
+				$self->render( 'not_found');
+			}
+		}
+		else
+		{
+			print "Got bad password reset request!!!\n";
+			$self->render( 'not_found');
+		}
+	};
+
+
+	#------------------------------------------------------------------------------
+	#  EVERY page below here first gets authenticated by this routine
+	#------------------------------------------------------------------------------
+	under sub
+	{
+##-->		print "\n\nIn top under, Checking for login...\n";
+		my $self = shift;
+		
+		##
+		##  Is this a user updating their password via the provided link?
+		## 
+		if ( defined( $self->param("user")) && defined( $self->param( "UID")))
+		{
+##-->			print "Looking for user" .  $self->param("user") . " with ID ". $self->param( "UID") . "\n";
+			##
+			##  Does the user ID for the named user match the provided ID?
+			##
+			my $info = getUserInfo( $self->param("user"), $self->param( "UID"));
+
+			##
+			##  Does the username and UID match with a user?
+			##
+			if ( defined( $info))
+			{
+##-->		print "Found info\n";
+				##
+				##  Is the password defined?
+				##
+				if ( defined( $info->{password}) && length( $info->{password}))
+				{
+##-->		print "password defined\n";
+					##
+					##  If we are here, either the user is reusing
+					##  their "signup" link or someone is trying to
+					##  sneak in.  Remember the page asked for and
+					##  redirect to login.
+					##
+					$self->session->{lastCall} = $self->{tx}->{req}->{url}->{path}->{path};
+					$self->redirect_to( 'login');
+				}
+				else
+				{
+					##
+					##  If we are here, then we need to get the password for a new user.
+					##
+##-->					print "\n\n\n ******** Get New User Password for " . $self->param('user') . "!!!!! *************\n\n\n";
+					$self->session( 'UID' => $self->param('UID'),
+									'user' => $self->param( 'user'),
+									expiration =>500);
+					$self->redirect_to( 'setPassword');
+				}
+##-->		print "Returning 1\n";
+				return 1;
+			}
+
+##-->        print "why here?\n";
+
+			$self->render(  'not_found');
+			return;
+		}
+
+		##
+		##	Is the user already logged in?
+		##
+		print "Checking for a cookie\n";
+		if ( defined( $self->cookie( 'UID')))
+		{
+			if ( UIDExists( $self->cookie('UID')))
+			{
+				print "User is already logged in...\n";
+				return 1;
+			}
+			else
+			{
+				print "Invalid cookie\n";
+			}
+		}
+
+		print "Redirecting to login...\n";
+		
+		##
+		##  redirect to login.
+		##
+		$self->session->{lastCall} = $self->{tx}->{req}->{url}->{path}->{path};
+		$self->redirect_to( 'login');
+		return 0;
+	};
+
+	#------------------------------------------------------------------------------
+	#	get '/'
+	#------------------------------------------------------------------------------
+	get '/' => sub
+	{
+		my ($self) = @_;
+	
+		my $loginId = getLoginIdForUID( $self->cookie('UID'));
+
+		##
+		##  Make sure that we have the latest updates...
+		##
+		readMembers();
+
+		$self->stash( members=>$members, loginId=> $loginId);
+		$self->render( 'index');
+	};
+
+	#------------------------------------------------------------------------------
+	#  get '/index' 
+	#------------------------------------------------------------------------------
+	get '/index' => sub
+	{
+		my ($self) = @_;
+
+		$self->redirect_to( '/');
+	};
+
+	#------------------------------------------------------------------------------
+	#  get 'editMe' 
+	#------------------------------------------------------------------------------
+	get 'editMe' => sub
+	{
+		my $self = shift;
+		my $id = $self->param( 'user');
+
+		print "HERE!!! ID=$id,  UID=" . $self->cookie('UID') . "\n";
+
+		my $memberInfo;
+		if (( defined( $self->cookie( 'UID'))) && ( $memberInfo = getUserInfo( $id, $self->cookie( 'UID'))))
+		{
+			print "HERE???\n";
+			$self->stash( memberInfo => $memberInfo);
+			$self->render( '/editMyEntry');
+		}
+		else
+		{
+			print "ACK!\n";
+			$self->render(  'not_found');
+			return;
+		}
+	};
+
+
+	#------------------------------------------------------------------------------
+	#  post '/updateMe'
+	#  		This post allows a user to update their information
+	#------------------------------------------------------------------------------
+	post '/updateMe' => sub
+	{
+		my $self = $_[0];
+
+		##
+		##  Get the JSON
+		##
+		my $json = $self->req->json();
+
+		##
+		##  Make sure that the loginID
+		##
+		if ( $json->{loginId} eq getLoginIdForUID( $self->cookie('UID')))
+		{
+			updateMemberInfo( @_);
+			$self->render( json => {status=> 'Saved'});
+		}
+		else
+		{
+			##
+			##  If here, this looks like someone attempting to modify someone else's settings...
+			##
+			$self->render( 'not_found');
+		}
+	};
+
+	#------------------------------------------------------------------------------
+	#  post '/removeMe'
+	#  		This post allows a user to remove theirself from the directory
+	#------------------------------------------------------------------------------
+	post '/removeMe' => sub
+	{
+		my $self = shift( @_);
+
+		##
+		##  Get the JSON
+		##
+		my $json = $self->req->json();
+
+		##
+		##  Get the member ID
+		##
+		my $id = $json->{loginId};
+
+		##
+		##  Make sure that the loginID
+		##
+		if ( $json->{loginId} eq getLoginIdForUID( $self->cookie('UID')))
+		{
+			print "Removing $id from the directory at their own request.\n";
+			removeMember( $id);
+
+			$self->render( json => {status=> 'Deleted'});
+		}
+		else
+		{
+			##
+			##  If here, this looks like someone attempting to modify someone else's settings...
+			##
+			$self->render( 'not_found');
+		}
+	};
+
+	#------------------------------------------------------------------------------
+	#  post '/uploadMyPhoto'
+	#------------------------------------------------------------------------------
+	post '/uploadMyPhoto' => sub
+	{
+		my $self = shift;
+	 
+		# Check file size
+		if ($self->req->is_limit_exceeded)
+		{
+			return $self->render(text => 'File is too big.', status => 200);
+		}
+	 
+		# Process uploaded file
+		my $imageFile = $self->param('imageFile');
+		my $size = $imageFile->size;
+		my $name = $imageFile->filename;
+		$name =~ s/\s//g;
+		$name =~ s/[:\[\]\(\)\!\,\;]//g;
+		
+		open( my $PHOTO, '>', "public/directory/Photos/photo-$name") || die "Can't make the file 'public/directory/Photos/photo-$name! $!\n";
+		my $data = $imageFile->asset->slurp;
+		binmode( $PHOTO);
+		syswrite( $PHOTO, $data);
+		close $PHOTO;
+		my $reply = { photo => "/directory/Photos/photo-$name"};
+
+		$self->render( json => $reply);
+	};
+
+	#------------------------------------------------------------------------------
+	#  websocket '/getPersonalInfo
+	#  		This call provides the personal information for the given person.
+	#------------------------------------------------------------------------------
+	websocket '/getPersonalInfo' => sub
+	{
+		my $self = shift;
+		readMembers();
+
+		##
+		##  See if we received a message
+		##
+		$self->on( json => sub
+				{
+					my ($self, $json) = @_;
+
+					my $name = $json->{tag};
+
+					if ( !defined( $json->{formatted}) || $json->{formatted})
+					{
+						my $html = '<img id="copyIcon" src="/directory/copy.png" onclick="copyInfo()" title="Copy"><div class="infoBox"><fullName>' . $members->{$name}->{firstName} . ' ' . $members->{$name}->{lastName} . "</fullName>\n";
+						if ( defined( $members->{$name}->{address}) && length( $members->{$name}->{address}))
+						{
+							$html .= '<street>' . $members->{$name}->{address} . "</street>\n";
+						}
+						my $separator = '';
+						if ( defined( $members->{$name}->{city}) && length( $members->{$name}->{city}))
+						{
+							if ( defined( $members->{$name}->{zip}) && length( $members->{$name}->{zip}))
+							{
+								$separator = ', '
+							}
+							$html .= '<city>' . $members->{$name}->{city} . $separator . "</city>\n";
+						}
+						if ( defined( $members->{$name}->{zip}) && length( $members->{$name}->{zip}))
+						{
+							$html .= '<zip>' . $members->{$name}->{zip} . "</zip>\n";
+						}
+						if (( defined( $members->{$name}->{phone}) && length( $members->{$name}->{phone})) ||
+							( defined( $members->{$name}->{cell}) && length( $members->{$name}->{cell})))
+						{
+							$html .= "<phoneBlock>";
+							
+							if ( defined( $members->{$name}->{phone}) && length( $members->{$name}->{phone}))
+							{
+								$html .= '<phone>phone:</phone> <phoneNumber><a href="tel:' . $members->{$name}->{phone}. '">' . $members->{$name}->{phone} . "</a></phoneNumber>\n";
+							}
+							if ( defined( $members->{$name}->{cell}) && length( $members->{$name}->{cell}))
+							{
+								$html .= '<cell>cell:</cell> <phoneNumber><a href="tel:' .$members->{$name}->{cell}.'">' . $members->{$name}->{cell} . "</a></phoneNumber>\n";
+							}
+							$html .= "</phoneBlock>\n";
+						}
+						if ( defined( $members->{$name}->{email}) && length( $members->{$name}->{email}))
+						{
+							$html .= '<email><a href="mailto:' .$members->{$name}->{email}.'">'.  $members->{$name}->{email} . "</a></email>\n";
+##-->							print "added $html\n";
+						}
+						$html .= '<br></div>';
+
+						##
+						##  Send back info
+						##
+						$self->send( $html);
+					}
+					else
+					{
+						##
+						##  Send back the json
+						##
+						$self->send({ json => $members->{$name}});
+					}
+				}
+		 );
+		
+	};
+
+
+	#=======================================================
+	#  This grouping makes everything inside it require
+	#  Admin access.
+	#=======================================================
+	group 
+	{
+		under sub
+		{
+			my ($self) = @_;
+			print "\n\n*********  Checking under under!\n\n\n";
+			if ( isAdminUID( $self->cookie('UID')))
+			{
+				print "The user is an admin!\n";
+				return 1;
+			}
+
+			print "User is not an admin!  Access denied!\n";
+			$self->render( 'not_found');
+			return 0;
+		};
+
+		#------------------------------------------------------------------------------
+		#  get '/admin'
+		#------------------------------------------------------------------------------
+		get '/admin' => sub
+		{
+			my ($self) = @_;
+
+			##
+			##  See if this person is an admin
+			##
+			if ( isAdminUID( $self->cookie('UID')))
+			{
+				##
+				##  Make sure that we have the latest updates...
+				##
+				readMembers();
+
+				$self->stash( members => $members);
+
+				$self->render( 'admin');
+			}
+			else
+			{
+				$self->redirect_to( 'not_found');
+			}
+		};
+		
+		#------------------------------------------------------------------------------
+		#  get '/editAdmins
+		#------------------------------------------------------------------------------
+		get '/editAdmins' => sub
+		{
+			my ($self) = @_;
+
+			##
+			##  Make sure that we have the latest updates...
+			##
+			readMembers();
+
+			$self->stash( members => $members);
+
+			$self->render( 'editAdmins');
+		};
+		
+		#------------------------------------------------------------------------------
+		#  get '/editDirectory
+		#------------------------------------------------------------------------------
+		get '/editDirectory' => sub
+		{
+			my ($self) = @_;
+
+			##
+			##  Make sure that we have the latest updates...
+			##
+			readMembers();
+
+			$self->stash( members => $members);
+
+			$self->render( 'editDirectory');
+		};
+
+		#------------------------------------------------------------------------------
+		#  get '/resetMemberPassword' => sub
+		#------------------------------------------------------------------------------
+		get '/resetMemberPassword' => sub
+		{
+			my ($self) = @_;
+
+			##
+			##  Make sure that we have the latest updates...
+			##
+			readMembers();
+			$self->stash( members => $members);
+
+			$self->render( 'resetPassword');
+		};
+
+		#------------------------------------------------------------------------------
+		#		get '/welcomeNewMembers' => sub
+		#------------------------------------------------------------------------------
+		get '/welcomeNewMembers' => sub
+		{
+			my ($self) = @_;
+		
+			##
+			##  Get a list of all the members
+			##
+			readMembers();
+			foreach my $loginId (keys( %$members))
+			{
+				##
+				##  See if this user has defined a password
+				##
+				my $pwd = $members->{$loginId}->{password};
+
+				if ( !defined( $pwd) || !length( $pwd))
+				{
+					sendEmailToMember( $members->{$loginId}, "New");
+				}
+			}
+
+			$self->stash( title => 'Done', textMessage=>'Welcome messages sent!', showFor => 1200);
+			$self->render( 'admin');
+		};
+
+		#------------------------------------------------------------------------------
+		#	get '/config' => sub`
+		#------------------------------------------------------------------------------
+		get '/config' => sub
+		{
+			my ($self) = @_;
+
+			my %config = getConfigInfo();
+
+			$self->stash( config => \%config);
+			$self->render( 'editConfig');
+		};
+
+		#------------------------------------------------------------------------------
+		#	get '/autoWelcome' => sub
+		#------------------------------------------------------------------------------
+		get '/autoWelcome' => sub
+		{
+			my ($self) = @_;
+
+			my %config = getConfigInfo();
+
+			$self->stash( autoWelcome => $config{DirectoryAutoWelcome});
+			$self->render( 'automaticWelcome');
+		};
+		
+		#------------------------------------------------------------------------------
+		#	get '/restore'
+		#		This call routes to the page for restoring from a backup
+		#------------------------------------------------------------------------------
+		get '/restore' => sub
+		{
+			my $self = shift;
+
+			$self->render( 'restoreBackup');
+		};
+
+		#------------------------------------------------------------------------------
+		#  post '/uploadPhoto'
+		#------------------------------------------------------------------------------
+		post '/uploadPhoto' => sub
+		{
+			my $self = shift;
+		 
+			# Check file size
+			if ($self->req->is_limit_exceeded)
+			{
+				return $self->render(text => 'File is too big.', status => 200);
+			}
+		 
+			# Process uploaded file
+			my $imageFile = $self->param('imageFile');
+			my $size = $imageFile->size;
+			my $name = $imageFile->filename;
+			$name =~ s/\s//g;
+			$name =~ s/[:\[\]\(\)\!\,\;]//g;
+			
+			open( my $PHOTO, '>', "public/directory/Photos/photo-$name") || die "Can't make the file 'public/directory/Photos/photo-$name! $!\n";
+			my $data = $imageFile->asset->slurp;
+			binmode( $PHOTO);
+			syswrite( $PHOTO, $data);
+			close $PHOTO;
+			my $reply = { photo => "/directory/Photos/photo-$name"};
+
+			$self->render( json => $reply);
+		};
+		
+
+		#------------------------------------------------------------------------------
+		#  post '/addNewMember'
+		#------------------------------------------------------------------------------
+		post '/addNewMember' => sub
+		{
+			my $self = shift;
+
+			my $json = $self->req->json();
+
+			my $name = $json->{firstName} . $json->{lastName};
+			my $count = 1;
+			my $id = "${name}_${count}";
+			$id =~ s/\s//g;
+			$id =~ s/\p{Punct}//g;
+
+			$json->{loginId} = $id;
+			$json->{UID} = generateUID();
+			
+			readMembers();
+
+			while( defined( $members->{$id}))
+			{
+				$count++;
+				$id = "${name}_${count}";
+			}
+
+			$json->{loginId} = $id;
+			$members->{$id} = $json;
+			writeMemberInfo( $json);
+
+			my %config = getConfigInfo();
+
+			if ( $config{DirectoryAutoWelcome})
+			{
+				sendEmailToMember( $json, "New");
+			}
+		 
+			$self->render( json => {status=> 'Saved'});
+		};
+
+		#------------------------------------------------------------------------------
+		#  post '/updateMember'
+		#------------------------------------------------------------------------------
+		post '/updateMember' => sub
+		{
+			my $self = $_[0];
+
+			updateMemberInfo( @_);
+		 
+			$self->render( json => {status=> 'Saved'});
+		};
+
+		#------------------------------------------------------------------------------
+		#  post '/removeMember'
+		#------------------------------------------------------------------------------
+		post '/removeMember' => sub
+		{
+			my $self = shift;
+
+			##
+			##  Get the JSON
+			##
+			my $json = $self->req->json();
+
+			##
+			##  Get the member ID
+			##
+			my $id = $json->{loginId};
+
+			removeMember( $id);
+
+			$self->render( json => {status=> 'Deleted'});
+		};
+
+		#------------------------------------------------------------------------------
+		#	post '/saveConfig'
+		#		This call saves the newly defined configuration settings
+		#------------------------------------------------------------------------------
+		post '/saveConfig' => sub
+		{
+			my $self = shift(@_);
+
+			if ( $self->param('submit') =~ /Save/)
+			{
+				my %config;
+
+				$config{"EmailServer"} = $self->param( "EmailServer");
+				$config{"EmailPort"} = $self->param( "EmailPort");
+				$config{"EmailUID"} = $self->param( "EmailUID");
+				$config{"EmailPWD"} = $self->param( "EmailPWD");
+				$config{"TwilioAcct"} = $self->param( "TwilioAcct");
+				$config{"TwilioAuth"} = $self->param( "TwilioAuth");
+				$config{"TwilioPhone"} = $self->param( "TwilioPhone");
+				$config{"DirectoryEmailSender"} = $self->param( "DirectoryEmailSender");
+				$config{DirectoryAdminName} = $self->param( "DirectoryAdminName");
+				$config{DirectoryAdminEmail} = $self->param( "DirectoryAdminEmail");
+				$config{DirectoryAdminPhone} = $self->param( "DirectoryAdminPhone");
+				$config{DirectoryAdminText} = $self->param( "DirectoryAdminText");
+				$config{DirectoryAccessURL} = $self->param( "DirectoryAccessURL");
+
+				saveConfig( %config);
+			}
+
+			$self->redirect_to( '/admin');
+		};
+
+		#------------------------------------------------------------------------------
+		#	post '/autoWelcome' => sub
+		#------------------------------------------------------------------------------
+		post '/autoWelcome' => sub
+		{
+			my ($self) = @_;
+
+			my $autoWelcome = $self->param('autoWelcome');
+
+			my %config = ( DirectoryAutoWelcome => (defined( $autoWelcome) && ( $autoWelcome eq 'on')) ? 1 : 0);
+			print "\n\n Got back " . $config{DirectoryAutoWelcome} . "\n";
+
+			saveConfig( %config);
+
+			$self->render( 'admin');
+		};
+		
+		
+		#------------------------------------------------------------------------------
+		#	post '/restore'
+		#		This call carries out the actual restore
+		#------------------------------------------------------------------------------
+		post '/restore' => sub
+		{
+			my $self = shift;
+		 
+			# Check file size
+			if ($self->req->is_limit_exceeded)
+			{
+				return $self->render(text => 'File is too big.', status => 200);
+			}
+		 
+			# Process uploaded file
+			my $filename = $self->param('filename');
+
+			my %response = restoreBackup( $filename);
+
+			print "Got back " . Dumper( %response) . "\n";
+			$self->stash( textMessage => $response{textMessage}, title=> $response{title}, showFor => $response{showFor});
+			print "Rendering index...\n";
+			$self->render( 'admin');
+		};
+		
+		#------------------------------------------------------------------------------
+		#  post '/resetPassword'
+		#------------------------------------------------------------------------------
+		post '/resetPassword' => sub
+		{
+			my $self = shift;
+
+			##
+			##  Get the JSON
+			##
+			my $json = $self->req->json();
+
+			##
+			##  Get the member ID
+			##
+			my $id = $json->{loginId};
+
+
+			##
+			##  Reset the password
+			##
+			resetMemberPassword( $id);
+
+			##
+			##  Get the user info
+			##
+			my $memberInfo = lookupUser( $id, "");
+
+			##
+			##  Send the user an email
+			##
+			sendEmailToMember( $memberInfo, "Reset");
+
+			$self->render( json => {status=> 'Password reset'});
+		};
+
+		#------------------------------------------------------------------------------
+		#  post '/toggleAdmin'
+		#------------------------------------------------------------------------------
+		post '/toggleAdmin' => sub
+		{
+			my $self = shift;
+
+			##
+			##  Get the JSON
+			##
+			my $json = $self->req->json();
+
+			##
+			##  Get the member ID
+			##
+			my $id = $json->{loginId};
+
+
+			##
+			##  Toggle the admin setting
+			##
+			toggleAdmin( $id);
+
+			$self->render( json => {status=> 'Status changed'});
+		};
+
+		#------------------------------------------------------------------------------
+		#	websocket '/backup'
+		#		This call stores the existing config and database in a tar file,
+		#		encrypts it, and then makes it available for download.
+		#------------------------------------------------------------------------------
+		websocket '/backup' => sub
+		{
+			my $ws = shift;
+
+			$ws->on (text => sub
+				{
+					$ws->inactivity_timeout(300);
+					my ($ws, $message) = @_;
+
+					print "Got a '$message' request\n";
+					if ( $message =~ m/Backup/)
+					{
+						my $backupFilename = BackupRestore::backupData();
+						$ws->send( $backupFilename);
+					}
+					else
+					{
+						$ws->send( "What??!");
+					}
+				}
+				);
+		};
+	};
+
+	
+	app->config( hypnotoad=>{listen =>['http://*:3000']});
+	app->secrets( ['Your mileage may vary']);
+	return app->start;
+}
+
+#------------------------------------------------------------------------------
+#  sub updateMemberInfo( @)
+#  		Update information about one member
+#------------------------------------------------------------------------------
+sub updateMemberInfo()
+{
+	my $self = shift;
+
+	##
+	##  Get the JSON
+	##
+	my $json = $self->req->json();
+
+	##
+	##  Get the member ID
+	##
+	my $id = $json->{loginId};
+
+	print "Modifying entry for user $id\n";
+	readMembers();
+
+	foreach my $key (keys(%{$json}))
+	{
+		print "Changing $key from $members->{$id}->{$key} to $json->{$key}\n";
+		$members->{$id}->{$key} = $json->{$key};
+	}
+
+	writeMemberInfo( $members->{$id});
+}
+
+#------------------------------------------------------------------------------
+#  sub readMembers()
+#  		Reads the member info list from disk
+#------------------------------------------------------------------------------
+sub readMembers()
+{
+	$members = readDirectoryMembers();
+}
+
+#------------------------------------------------------------------------------
+#  sub saveMembers()
+#  		Writes the member list to disk in JSON format
+#------------------------------------------------------------------------------
+sub saveMembers()
+{
+	saveDirectoryMembers( $members);
+}

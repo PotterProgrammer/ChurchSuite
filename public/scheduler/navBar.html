@@ -1,0 +1,165 @@
+<style>
+
+nav {
+	background-color: lightgray;
+    color: blue;
+    padding: 0;
+}
+
+nav a
+{
+	text-decoration: none;
+	margin-left:2em;
+	color: black;
+	float: left;
+}
+
+nav a:hover
+{
+	text-decoration:underline;
+}
+
+nav ul 
+{
+    list-style-type: none;
+    margin: 0;
+    padding: 0;
+}
+
+nav ul li 
+{
+    display: inline;
+    margin-right: 20px;
+}
+
+nav img
+{
+	height:2em;
+	width: 2em;
+	position: relative;
+	top: -5px;
+}
+
+nav ul li a 
+{
+    color: black;
+    text-decoration: none;
+}
+
+nav ul li a:hover 
+{
+    text-decoration: underline;
+}
+
+.submenu
+{
+	float: left;
+	overflow: hidden;
+	background-color: lightgray;
+}
+
+.submenu .submenuButton
+{
+	border: none;
+	outline: none;
+	color: black;
+	background-color: lightgray;
+	font-family: inherit;
+	margin: 0;
+}
+
+
+.submenuContent
+{
+	display: none;
+	position: absolute;
+	background-color: lightgray;
+	z-index: 1;
+	box-shadow: 10px 10px 5px rgba( 0, 0, 0, .68);
+	border-top: solid 1px #a0a0a0;
+	border-left: solid 1px gray;
+	border-right: solid 1px gray;
+}
+
+.submenu:hover .submenuContent
+{
+	display: block;
+}
+
+.submenuContent  a 
+{
+	white-space:nowrap;
+	margin-left: 1em;
+	margin-right: 1em;
+	margin-bottom: .25em;
+}
+
+#gear
+{
+	height:1.9em;
+	width:1.9em;
+	margin-top: 0;
+	top: 2px;
+}
+
+.rightEdge
+{
+	left: calc( 99.25vw - 11.5em);
+	width: 11em;
+}
+
+</style>
+
+<script src="scheduler.js"> </script>
+
+<nav id="mainMenu">
+	<a href="/scheduler/index"><img src="/scheduler/scheduler.png"></a>
+	<div class="submenu">
+		<button class="submenuButton">Positions⏷</button>
+		<div class="submenuContent" >
+			<a href="/scheduler/addSlots">Add Positions</a><br>
+			<a href="/scheduler/editSlots">Edit Positions</a><br>
+		</div>
+	</div>
+	<div class="submenu">
+		<button class="submenuButton">Volunteers⏷</button>
+		<div class="submenuContent" >
+			<a href="/scheduler/addVolunteer">Add Volunteers</a><br>
+			<a href="/scheduler/editVolunteers">Edit Volunteers</a><br>
+		</div>
+	</div>
+	<div class="submenu">
+		<button class="submenuButton">Schedule⏷</button>
+		<div class="submenuContent" >
+			<a href="/scheduler/buildSchedule">Generate Schedule</a><br>
+			<a href="/scheduler/showSchedule">View Schedule</a><br>
+		</div>
+	</div>
+	<div class="submenu">
+		<button class="submenuButton">Send⏷</button>
+		<div class="submenuContent">
+			<a href="/scheduler/requestUpdates">Send Info Update Requests</a><br>
+			<a href="/scheduler/sendSchedule">Send Schedules</a><br>
+			<a href="/scheduler/sendReminders">Send Weekly Reminders</a>
+		</div>
+	</div>
+	<div class="submenu">
+		<button class="submenuButton">Help⏷</button>
+		<div class="submenuContent">
+			<a onclick="showHelp()" >User's Manual</a><br>
+			<a href="/scheduler/about">About</a>
+		</div>
+	</div>
+	<div class="submenu" id="gearMenu">
+		<span class="submenuButton">
+			<img id="gear" src="/scheduler/images/gear64.png">
+		</span>
+		<div class="submenuContent rightEdge">
+			<a href="/scheduler/config">System Settings</a><br>
+			<a onclick="makeABackup();return false;" >Make Backup</a><br>
+			<a href="/scheduler/restore">Restore Backup</a><br>
+			<a href="/scheduler/enableAutomaticReminders">Automatic Reminders</a><br>
+			<a href="/scheduler/logoff">Log off</a>
+		</div>
+	</div>
+</nav>

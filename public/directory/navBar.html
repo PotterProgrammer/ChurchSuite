@@ -1,0 +1,23 @@
+<link rel="stylesheet" href="/directory/site.css">
+
+
+<nav id="mainMenu">
+	<a href="/directory/index"><img src="/directory/DirectoryIcon.png"></a>
+	<a href="/directory/editAdmins">Edit Admins</a>
+	<a href="/directory/editDirectory">Edit Members</a>
+	<a href="/directory/resetMemberPassword">Reset Member Password</a>
+	<a href="/directory/welcomeNewMembers">Welcome New Members</a>
+	<div class="submenu" id="gearMenu">
+		<span class="submenuButton">
+			<img id="gear" src="/directory/images/gear64.png">
+		</span>
+		<div class="submenuContent rightEdge">
+			<a href="/directory/config">System Settings</a>
+			<a href="/directory/autoWelcome">Automatic Welcome Message</a>
+			<a onclick="makeABackup();return false;" >Make Backup</a>
+			<a href="/directory/restore">Restore Backup</a>
+			<a href="/directory/logoff">Log off</a>
+		</div>
+	</div>
+</nav>
+

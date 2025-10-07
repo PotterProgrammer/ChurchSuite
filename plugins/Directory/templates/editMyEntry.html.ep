@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+	<script src="/common/Dialog.js"> </script>
+	<link rel="stylesheet" href="/directory/site.css">
+</head>
+
+
+
+<script>
+
+const UPLOAD_PHOTO = "uploadPhoto.png";
+
+document.addEventListener('DOMContentLoaded', onRefreshScreen);
+
+
+//------------------------------------------------------------------------------
+//  function onRefreshScreen()
+//  	On screen load, set photo form upload handler
+//------------------------------------------------------------------------------
+function onRefreshScreen()
+{
+    form = document.getElementById('photoUpload');
+    form.addEventListener('submit', sendPhoto);
+}
+
+//------------------------------------------------------------------------------
+//  function enableEditMemberButtons()
+//------------------------------------------------------------------------------
+function enableEditMemberButtons()
+{
+    let list=document.getElementsByClassName('editMemberButton');
+    for (const button of list)
+    {
+        button.disabled = false;
+    }
+}
+
+//------------------------------------------------------------------------------
+//  function disableEditMemberButtons()
+//------------------------------------------------------------------------------
+function disableEditMemberButtons()
+{
+    let list=document.getElementsByClassName('editMemberButton');
+    for (const button of list)
+    {
+        button.disabled = true;
+    }
+}
+
+//------------------------------------------------------------------------------
+//  function editPhoto( event)
+//      This function either starts photo selection or asks how to deal with
+//      current photo.
+//------------------------------------------------------------------------------
+function editPhoto( event)
+{
+    let memberPhoto = document.getElementById( 'memberPhoto');
+    if ( memberPhoto.src.endsWith( UPLOAD_PHOTO))
+    {
+        setPhoto( event);
+    }
+    else
+    {
+        document.getElementsByTagName('photo')[0].addEventListener("mouseleave", (event) => { hideFauxButtons()});
+        showFauxButtons();
+    }
+}
+
+//------------------------------------------------------------------------------
+//  function resetPhoto()
+//      This function removes the prior photo.
+//------------------------------------------------------------------------------
+function resetPhoto()
+{
+    let memberPhoto = document.getElementById( 'memberPhoto');
+    memberPhoto.src = UPLOAD_PHOTO;
+    hideFauxButtons();
+}
+
+//------------------------------------------------------------------------------
+//  function showFauxButtons()
+//------------------------------------------------------------------------------
+function showFauxButtons()
+{
+    let buttons = document.getElementsByClassName( 'editPhotoChoice');
+    for ( const button of buttons)
+    {
+        button.style.visibility = 'visible';
+    }
+}
+
+//------------------------------------------------------------------------------
+//  function hideFauxButtons()
+//------------------------------------------------------------------------------
+function hideFauxButtons()
+{
+    let buttons = document.getElementsByClassName( 'editPhotoChoice');
+    for ( const button of buttons)
+    {
+        button.style.visibility = 'hidden';
+    }
+}
+
+
+//------------------------------------------------------------------------------
+//  function setPhoto( event)
+//------------------------------------------------------------------------------
+function setPhoto( event)
+{
+    hideFauxButtons();
+    let browseFile = document.getElementById( 'poke');
+    browseFile.click();
+}
+
+//------------------------------------------------------------------------------
+//  function sendPhoto( event)
+//      This function handles submitting the selected photo for storage.
+//------------------------------------------------------------------------------
+function sendPhoto(event) 
+{
+    hideFauxButtons();
+    const url = new URL(form.action);
+    const formData = new FormData(form);
+
+    /** @type {Parameters<fetch>[1]} */
+    const fetchOptions = {
+                            method: form.method,
+                            body: formData,
+                         };
+
+
+    fetch(url, fetchOptions)
+        .then( response => response.json())
+        .then( data => {
+               let memberPhoto = document.getElementById( 'memberPhoto');
+               memberPhoto.src = data.photo;
+               });
+
+
+    event.preventDefault();
+}
+
+//------------------------------------------------------------------------------
+//  function updateMember( event)
+//      This function sends new member information to the server
+//------------------------------------------------------------------------------
+function updateMember(event) 
+{
+    let obj = getFormInfo();
+
+    if ( obj === undefined)
+    {
+        return;
+    }
+
+    //
+    //  Add the selected ID to the object to be sent
+    //
+    obj.loginId = "<%= $memberInfo->{loginId} %>";
+
+    const fetchOptions = {
+                            method: "POST",
+                            body:  JSON.stringify( obj),
+							headers: { "Content-Type": "application/json",
+							           "Accepts" : "application.json"
+									 }
+                         };
+
+    let url =  "/directory/updateMe";
+
+    fetch( url, fetchOptions)
+        .then( response =>  { return response.json();})
+        .then( data => {
+				if ( data.status == "Saved")
+				{
+					window.location = "<%= url_for('/')->to_abs %>";
+				}
+				else
+				{
+					Dialog.Alert( { title: "Data Not Updated!", text: "Please inform the directory administrator"});
+				}
+             });
+
+}
+
+//------------------------------------------------------------------------------
+//  function removeMember()
+//------------------------------------------------------------------------------
+function removeMember()
+{
+    let id = "<%= $memberInfo->{loginId} %>";
+	let firstName = "<%= $memberInfo->{firstName} %>";
+	let lastName = "<%= $memberInfo->{lastName} %>";
+    
+	Dialog.Confirm( {title: "Remove Directory Member", text: "Are you sure you want to remove\n<memberName>" + firstName + " " + lastName + "</memberName>\nfrom the directory? \nIf you do so, you will be logged out and no longer able to access the directory!"}).then( (answer) =>
+		{
+			if ( answer)
+			{
+				const fetchOptions = {
+										method: "POST",
+										body:  '{ "loginId": "' + id + '"}',
+										headers: { "Content-Type": "application/json",
+												   "Accepts" : "application.json"
+												 }
+									 };
+
+				let url =  "/directory/removeMe";
+
+				fetch( url, fetchOptions)
+					.then( response => response.json())
+					.then( data=> { 
+							alert( "Relocating!");
+							window.location = "<%= url_for('/')->to_abs %>";
+						   });
+			}
+		});
+}
+
+
+//------------------------------------------------------------------------------
+//  function getFormInfo()
+//      This function pulls the member information from the form and returns it
+//      as an object.
+//------------------------------------------------------------------------------
+function getFormInfo()
+{
+    let form = document.getElementById( 'memberInfoForm');
+    const formData = new FormData(form);
+    let obj = Object.fromEntries( Array.from(formData.keys())
+                                  .map(key => [ key, formData.getAll(key).length > 1 ? 
+                                                formData.getAll(key) : formData.get(key)
+                                              ]));
+
+    if ( obj.firstName == "")
+    {
+        document.getElementById( "firstName").focus();
+        Dialog.Alert( { title: "Missing Information!", text: "You must specify a first name!"});
+        return;
+    }
+
+    if ( obj.lastName == "")
+    {
+        document.getElementById( "lastName").focus();
+        Dialog.Alert( { title: "Missing Information!", text: "You must specify a last name!"});
+        return;
+    }
+
+    let memberPhoto = document.getElementById( 'memberPhoto');
+    if ( !memberPhoto.src.endsWith( UPLOAD_PHOTO))
+    {
+        obj.photo = memberPhoto.src.replace( /.*\/directory\/Photos/, "/directory/Photos");
+    }
+	else
+	{
+		obj.photo = null;
+	}
+
+    return obj;
+}
+
+
+</script>
+
+<body>
+  
+<nav>
+	<a href="/directory/index"><img src="/directory/DirectoryIcon.png"></a>
+	<a class="filler">&nbsp;</a>
+	<div class="submenu" id="gearMenu">
+		<span class="submenuButton">
+			<img id="gear" src="/directory/images/gear64.png">
+		</span>
+		<div class="submenuContent rightEdge">
+			<a href="/directory/logoff">Log off</a>
+		</div>
+	</div>
+</nav>
+  
+  <TheTitle>Edit Directory Listing</TheTitle>
+  
+  
+  <uploadform>
+      <form id="photoUpload" action="/directory/uploadMyPhoto" method="post" enctype="multipart/form-data">
+          <input id="imageFile" type="file" name="imageFile" onchange="console.log( 'BEEP');document.getElementById('photoUpload').requestSubmit();" />
+          <input id="bob" type="submit" />
+      </form>
+  </uploadform>
+  
+  <div id="page">
+    <div id="dataEntry">
+    <form id="memberInfoForm" action="/addNewMember" method="post">
+      <photo>
+          <img id="memberPhoto" src="<%= (defined( $memberInfo->{photo}) && length( $memberInfo->{photo}))? $memberInfo->{photo} : 'uploadPhoto.png' %>" onclick="editPhoto()">
+          <fauxbutton class="editPhotoChoice" id="pickPhoto"><label id="poke" for="imageFile">Choose new photo</label></fauxbutton>
+          <fauxbutton class="editPhotoChoice" id="deletePhoto" onclick="resetPhoto();">Delete this photo</fauxbutton>
+      </photo>
+      <br>
+      <div id="formInfo">
+          <label class="infoLabel"  for="firstName">First Name:</label>
+          <input type="text" id="firstName" name="firstName" required autofocus value="<%= $memberInfo->{firstName} %>"></input>
+  
+          <label class="infoLabel"  for="lastName">Last Name:</label>
+          <input type="text" id="lastName" name="lastName" required value="<%= $memberInfo->{lastName} %>"></input>
+        
+          <label class="infoLabel"  for="address">Address:</label>
+          <input type="text" id="address" name="address" value="<%= $memberInfo->{address} %>"></input>
+          
+          <label class="infoLabel"  for="city">City:</label>
+          <input type="text" id="city" name="city" value="<%= $memberInfo->{city} %>"></input>
+          
+          <label class="infoLabel"  for="zip">Zip:</label>
+          <input type="text" id="zip" name="zip" value="<%= $memberInfo->{zip} %>"></input>
+          
+          <label class="infoLabel"  for="phone">Phone number:</label>
+          <input type="tel" id="phone" name="phone" value="<%= $memberInfo->{phone} %>" pattern="[0-9]{3}-[0-9]{3}-[0-9]{4}"></input>
+          
+          <label class="infoLabel"  for="cell">Cell number:</label>
+          <input type="tel" id="cell" name="cell" value="<%= $memberInfo->{cell} %>" pattern="[0-9]{3}-[0-9]{3}-[0-9]{4}"></input>
+          
+          <label class="infoLabel"  for="email">Email address:</label>
+          <input type="email" id="email" name="email" value="<%= $memberInfo->{email} %>"></input>
+       </div>
+    </form>
+        <br>
+        <div>
+            <button class="editMemberButton" onClick="updateMember()">Update My Entry</button>
+            <button class="editMemberButton" onClick="removeMember()">Remove My Entry</button>
+        </div>
+    </div>
+  </div>
+</body>
+</html>
+
+

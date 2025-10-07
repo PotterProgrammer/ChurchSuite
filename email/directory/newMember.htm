@@ -1,0 +1,86 @@
+<html>
+<style>
+
+body
+{
+	font-size: 11pt;
+	font-family: Segoe UI, Droid Sans, Hevetica, Arial, sans-serif;
+	color: black;
+}
+
+img
+{
+	width: 20%;
+	margin-left: 40%;
+}
+
+b
+{
+	color: blue;
+	font-weight: 700;
+}
+
+a[href^="mailto:"]:before
+{
+	content: "\2709\FE0F";
+}
+
+a[href^="tel:"]:before 
+{
+	content: "\260e";
+	margin-right: 3px;
+}
+
+a[href^="tel:"]
+{
+	color: blue;
+	font-weight: 500;
+}
+
+a[href^="sms:"]:before
+{
+	content: "\1F4F2";
+	margin-right: 3px;
+}
+
+li
+{
+	position: relative;
+}
+
+li a
+{
+	position: absolute;
+	left: 4em;
+}
+.closing
+{
+	text-align: center;
+	margin-top: 36pt;
+	font-weight: bold;
+}
+</style>
+
+<body>
+<img src="cid:directoryLogo.png">
+<br>
+
+Hello __FIRST_NAME__,
+<p>This is quick note to let you know that you have been added to the online directory.
+</p>
+<p> 
+<p>You can view the directory from your browser on your phone or computer by going to
+<a href="__ACCESS_URL__">__ACCESS_URL__</a>, and logging in with your login name (<b>__LOGIN_ID__</b>) and password.  
+But first, to activate your account and set your password, please <a href="__ACTIVATE_URL__">click here</a>.
+</p>
+
+<p>If you have any questions or problems with the directory, please contact __DIRECTORY_ADMIN__:
+<ul>
+	<li>Email: <a href="mailto:__DIRECTORY_ADMIN_EMAIL__?subject=__NAME__ has questions about the directory">__DIRECTORY_ADMIN_EMAIL__</a></li>
+	<li>Phone: <a href="tel:__DIRECTORY_ADMIN_DIALABLE_PHONE__">__DIRECTORY_ADMIN_PHONE__</a></li>
+	<li>Text: <a href="sms:__DIRECTORY_ADMIN_TEXTABLE_NUMBER__">__DIRECTORY_ADMIN_TEXT_NUMBER__</a></li>
+</ul>
+
+</body>
+</html>
+

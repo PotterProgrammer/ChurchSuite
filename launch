@@ -1,0 +1,45 @@
+#!/usr/bin/perl
+#------------------------------------------------------------------------------
+#  This file loads any ChurchSuite plugin and readies the webserver for
+#  launching.
+#------------------------------------------------------------------------------
+
+
+use warnings;
+use strict;
+
+
+use lib "./";
+
+use Mojolicious::Lite;
+use Getopt::Long;
+
+#main:
+{
+	my $port = 3000;
+	GetOptions( "port=i" => \$port);
+
+	opendir( my $dir, './plugins') || die "Can't find the plugins! $!\n";
+	while( my $filename = readdir $dir)
+	{
+		print "Checking $filename...\n";
+		if ( -d "./plugins/$filename" && $filename !~ /\./ && $filename !~ /Common/)
+		{
+			print "Loading $filename...\n";
+##-->			require "./plugins/$filename";
+##-->			my $fn = "${filename}_registerApi();";
+##-->			print "Calling $fn\n";
+##-->			eval "$fn;";
+			my $link = $filename;
+			$link =~ tr/A-Z/a-z/;
+			plugin Mount => {"/$link" => "./plugins/$filename/$filename"};
+		}
+
+	}
+
+##-->	app->config( hypnotoad=>{listen =>['http://*:3000']});
+	app->secrets( ['Your mileage may vary']);
+	app->start;
+}
+
+
