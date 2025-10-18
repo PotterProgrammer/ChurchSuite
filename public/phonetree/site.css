@@ -1,0 +1,732 @@
+body
+{
+	background-color: #0000ec;
+	color: white;
+	font-family: Hevetica, Arial, sans-serif;
+	font-size: 13pt;
+	margin-left: 0;
+}
+
+h1
+{
+	text-align: center;
+}
+
+input
+{
+	font-size: 12pt;
+	max-width: 15em;
+}
+
+input:disabled
+{
+	background-color: rgba( 0,0,0,0);
+	color: white;
+	border: none;
+	font-weight: 900;
+	font-size: 14pt;
+}
+
+select
+{
+	font-size: 14pt;
+	vertical-align: middle;
+	margin-bottom: .5em;
+}
+
+select:disabled
+{
+	background-color: white;
+	color: black;
+}
+
+select:disabled,option:checked
+{
+	background-color:white;
+}
+
+
+#settingInstructions
+{
+	width: 90%;
+	margin-left: 5%;
+	font-weight: bold;
+	font-size: 105%;
+	color: #c00000;
+	background-color: white;
+	padding-left: 1em;
+	margin-bottom: 0;
+}
+
+.cfgTable
+{
+	margin-left: auto;
+	margin-right: auto;
+}
+.cfgLeft
+{
+	padding-left: 5em;
+}
+
+.cfgHead
+{
+	padding-left: 3em;
+	padding-top: 1.15em;
+}
+
+.cfginput
+{
+	max-width: 50em;
+	width: 25em;
+}
+
+#buttonRow
+{
+	padding-top:  3vh;
+	margin-left: auto;
+	margin-right: auto;
+	width: 23em;
+}
+
+#buttonRow input
+{
+	margin-left:2em;
+	margin-right: 2em;
+	width: 8em;
+}
+
+#submitbtn
+{
+	float: left;
+}
+
+#resetbtn
+{
+	float: right;
+}
+
+#confirmDialog
+{
+    text-align: center;
+    box-shadow: 10px 10px 5px rgba( 0,0,0,.6);
+    border-radius: 20px;
+	min-width: 20em;
+}
+
+#dialogButtonRow
+{
+    display: flex;
+    justify-content: center;
+    margin-top: 1em;
+}
+
+#dialogTitle
+{
+    color: #d00000;
+    margin-top: 0px;
+    margin-bottom: 10px;
+}
+
+.dialogButton
+{
+    padding-left: 1em;
+    padding-right: 1em;
+    margin-left: 1em;
+    margin-right: 1em;
+}
+
+#confirmRestore
+{
+	width: 70%;
+	margin-left: auto;
+	margin-right: auto;
+}
+
+
+nav {
+	background-color: lightgray;
+    color: blue;
+    padding: 0;
+	width: 101.3%;
+	height: 2.3em;
+	margin-left: -10px;
+}
+
+nav a
+{
+	text-decoration: none;
+	margin-left:2em;
+	color: black;
+	float: left;
+	margin-top: .6em;
+}
+
+nav a:hover
+{
+	text-decoration:underline;
+}
+
+nav ul 
+{
+    list-style-type: none;
+    margin: 0;
+    padding: 0;
+}
+
+nav ul li 
+{
+    display: inline;
+    margin-right: 20px;
+}
+
+nav img
+{
+	height:2em;
+	width: 2em;
+	position: relative;
+	top: -9px;
+}
+
+nav ul li a 
+{
+    color: black;
+    text-decoration: none;
+}
+
+nav ul li a:hover 
+{
+    text-decoration: underline;
+}
+
+#gearMenu
+{
+	float: right;
+}
+
+.submenu
+{
+	float: left;
+	overflow: hidden;
+	background-color: lightgray;
+}
+
+.submenu .submenuButton
+{
+	border: none;
+	outline: none;
+	color: black;
+	background-color: lightgray;
+	font-family: inherit;
+	margin-top: 0.6em;
+	margin-left: 2em;
+}
+
+
+.submenuContent
+{
+	display: none;
+	position: absolute;
+	background-color: lightgray;
+	z-index: 1;
+	box-shadow: 10px 10px 5px rgba( 0, 0, 0, .68);
+	border-top: solid 1px #a0a0a0;
+	border-left: solid 1px gray;
+	border-right: solid 1px gray;
+}
+
+.submenu:hover .submenuContent
+{
+	display: grid;
+}
+
+.submenuContent  a 
+{
+	white-space:nowrap;
+	margin-left: 1em;
+	margin-right: 1em;
+	margin-bottom: .2em;
+	margin-top: .2em;
+}
+
+#gear
+{
+	height:1.9em;
+	width:1.9em;
+	margin-top: 0;
+	margin-right: 10px;
+	top: 5px;
+}
+
+.rightEdge
+{
+	left: calc( 99.25vw - 14.65em);
+;;-->	margin-top: 3px;
+	width: 15em;
+}
+
+TheTitle
+{
+   color: white;
+   font-weight: 550;
+   font-size: 36pt;
+   text-align: center;
+   display:block;
+   margin-top: 1em;
+   margin-bottom: .5em;
+}
+
+.picture
+{
+	margin: 1em;
+	width: 320px;
+	max-height: 460px;
+	display: inline-block;
+/*	border: 4px solid green; */
+}
+
+.photoHolder
+{
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+    height: calc(460px - 1.5em);
+}
+
+.picture img
+{
+    height: auto;
+	width: auto;
+	max-width: 100%;
+	max-height: 100%;
+	margin: auto;
+	border: 2px solid black;
+    object-fit:contain;
+}
+
+photoCaption
+{
+	display:block;
+	color: white;
+	text-align: center;
+	font-weight: 550;
+	margin-top: .5em;
+}
+
+#infoBox
+{
+	width:100px;
+	height: 100px;
+	background-color: white;
+	color: black;
+	border: 1px solid black;
+	box-shadow: 7px 7px 7px rgba(0,0,0, .7);
+	display: none;
+	position: absolute;
+	z-index: 2;
+}
+
+.infoBox
+{
+	padding-left:1em;
+}
+
+#copyIcon
+{
+	width: 25px;
+    margin: 3px;
+}
+
+fullName
+{
+	display: block;
+	color: #0000c0;
+	font-weight: 800;
+}
+street
+{
+	display:block;
+}
+city
+{
+	display: inline-block;
+	margin-bottom: .5em;
+}
+zip
+{
+	display: inline-block;
+	margin-bottom: .5em;
+}
+
+phoneBlock
+{
+    display:grid;
+    grid-template-columns: max-content max-content;
+    grid-gap: 5px;
+    margin-top: 5px;
+    margin-bottom: 15px;
+    line-height: 110%;
+}
+
+phone
+{
+	display: block;
+    font-weight: bold;
+    text-align: right;
+}
+
+cell
+{
+	display: block;
+    font-weight: bold;
+    text-align: right;
+}
+
+phoneNumber
+{
+    display: inline-block;
+}
+email
+{
+	display: block;
+}
+
+
+#page
+{
+    position: relative;
+    margin-left: 5%;
+    margin-right: 5%;
+}
+
+uploadForm
+{
+    display: none;
+}
+
+namesList
+{
+    display: inline-block;
+    width: 30%;
+}
+
+#dataEntry
+{
+    display: inline-block;
+    position: absolute;
+    top: 0px;
+    margin-left: 35%;
+	font-size: 13pt;
+}
+
+namesList + #dataEntry
+{
+	margin-left: 5%;
+}
+
+namesList + #dataEntry photo
+{
+	margin-right: 28%;
+}
+
+photo
+{
+    display: flex;
+    align-items: center;
+    background-color: #d0d0d0;
+    width:  191px;
+    height: 241px;
+    margin-left: auto;
+	margin-top: 1em;
+    border: 3px solid black;
+}
+
+photo img
+{
+    width: 100%;
+    max-height: 100%;
+}
+
+button
+{
+	font-size:12pt;
+}
+
+fauxbutton
+{
+    display:block;
+	color: black;
+    background-color: #f0f0f0;
+    border: 1px solid black;
+    padding-left: .5em;
+    padding-right: .5em;
+    border-radius: 5px;
+    box-shadow: 5px 5px 3px rgba(0,0,0,.5);
+}
+
+.editPhotoChoice
+{
+    position: absolute;
+    display: block;
+    visibility: hidden;
+    z-index: 3;
+}
+
+#pickPhoto
+{
+    top: auto;
+    left: 37%;
+}
+
+namesList + #dataEntry #pickPhoto
+{
+	left: 29%;
+}
+
+#deletePhoto
+{
+    top: 180px;
+    left: 40%;
+}
+
+namesList + #dataEntry #deletePhoto
+{
+	left: 31%;
+}
+
+div#formInfo
+{
+    display:grid;
+    grid-template-columns: max-content max-content;
+    grid-gap: 5px;
+}
+.infoLabel
+{
+    text-align: right;
+    margin-bottom: .5em;
+	color: white;
+}
+
+form input
+{
+    margin-bottom: .5em;
+	font-size: 12pt;
+}
+
+memberName
+{
+    font-weight: bold;
+    color: blue;
+}
+
+adminNamesList
+{
+    display: inline-block;
+    width: 30vw;
+}
+
+#memberNames
+{
+    width:  100%;
+    border: 3px solid black;
+	font-size: 13pt;
+}
+
+
+#toggleStatus
+{
+    margin-bottom: .5em;
+	font-size: 12pt;
+	width: 10em;
+	margin-left:30%;
+}
+
+#instructions
+{
+    display: inline-block;
+    margin-left: 5%;
+	font-size: 13pt;
+}
+
+#screen
+{
+	display:flex;;
+}
+
+#container 
+{ 
+	display: block;
+	width: fit-content;
+	margin: 0 auto; 
+	margin-top: 20px; 
+	margin-bottom: 20px;
+	padding-bottom: 10px;
+	background: #fff; 
+	border-radius: 6px; 
+	-webkit-border-radius: 6px; 
+	-moz-border-radius: 6px;
+	-webkit-box-sizing: border-box;
+	-moz-box-sizing: border-box; 
+	box-sizing: border-box;  
+	height: fit-content;
+}
+
+#list
+{
+	display: flex;
+	justify-content: center;
+	width: 30%;
+}
+
+#stacked
+{
+	display: flex;
+	flex-direction: column;
+}
+
+#memberList
+{
+	width: 12em;
+	border: 2px solid black;
+	margin-top: 20px;
+}
+
+#OneContact-form
+{
+	box-sizing: border-box; 
+}
+
+#container #OneContact-form
+{
+	color: black;
+	padding-top: 20px;
+	padding-bottom: 15px;
+	padding-left: 15px;
+	padding-right: 10px;
+}
+
+#OneContact-form #slider { width: 60%; }
+
+#OneContact-form #aligned
+{ 
+	box-sizing: border-box; 
+	float: left; 
+	width: 18em;
+	padding-right: 20px;
+}
+
+#aligned label
+{
+	font-size:11pt;
+	display: inline-block;
+	width: 5.5em;
+	text-align: right;
+}
+
+#aside label
+{
+	display: inline-block;
+	width: 8.5em;
+	text-align: left;
+}
+
+
+#OneContact-form #aside
+{
+	float: left;
+	width: fit-content;
+	padding-right: 1em;
+	box-sizing: border-box;
+	font-size: 10pt;
+}
+
+#OneContact-form select
+{
+	font-size: 10pt;
+}
+
+#OneContact-form fieldset
+{
+	padding-right: 1em;
+}
+
+#OneContact-form .txtinput 
+{ 
+	font-family: "Helvetica Neue", Arial, sans-serif;
+	border-style: solid;
+	border-width: 1px;
+	border-color: #dedede;
+	margin-top: 5px;
+	margin-bottom: 15px;
+	font-size: 11pt;
+
+	padding-left: 25px;
+	color: #777;
+	box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1) inset;
+	-moz-box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1) inset;
+	-webkit-box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1) inset; 
+	transition: border 0.15s linear 0s, box-shadow 0.15s linear 0s, color 0.15s linear 0s;
+	-webkit-transition: border 0.15s linear 0s, box-shadow 0.15s linear 0s, color 0.15s linear 0s;
+	-moz-transition: border 0.15s linear 0s, box-shadow 0.15s linear 0s, color 0.15s linear 0s;
+	-o-transition: border 0.15s linear 0s, box-shadow 0.15s linear 0s, color 0.15s linear 0s;
+}
+
+#OneContact-form .txtinput:focus 
+{ 
+	color: #333;
+	border-color: rgba(41, 92, 161, 0.4);
+	box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1) inset, 0 0 8px rgba(41, 92, 161, 0.6);
+	-moz-box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1) inset, 0 0 8px rgba(41, 92, 161, 0.6);
+	-webkit-box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1) inset, 0 0 8px rgba(41, 92, 161, 0.6);
+	outline: 0 none; 
+}
+
+
+#OneContact-form input.name 
+{
+	background: #fff url('images/user.png') 5px 4px no-repeat;
+	background-size: 10pt 10pt;
+}
+
+#OneContact-form input#email 
+{
+	background: #fff url('images/email.png') 5px 4px no-repeat;
+	background-size: 10pt 10pt;
+}
+
+#OneContact-form input#cellphone 
+{
+	background: #fff url('images/phone.png') 5px 4px no-repeat;
+	background-size: 10pt 10pt;
+}
+
+#OneContact-form input#landline 
+{
+	background: #fff url('images/landline.png') 5px 4px no-repeat;
+	background-size: 10pt 10pt;
+}
+
+#OneContact-form input#grp_name 
+{
+	background: #fff url('images/group.png') 5px 4px no-repeat;
+	font-size: 12pt;
+	height: 2.3em;
+	width:100%;
+}
+
+
+#OneContact-form select#chosenContacts
+{
+	background: #fff;
+	font-size: 12pt;
+	max-width:400px;
+	width: 100%;
+	text-align:center;
+}
+
+#buttons
+{
+	display: flex;
+	justify-content: center;
+	gap: 20px
+}

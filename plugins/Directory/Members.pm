@@ -311,8 +311,8 @@ sub getUserInfo($$)
 	if ( defined( $matches))
 	{
 		$memberInfo = $matches->{$name};
-	print "Got a match!\n";
-	print Dumper( $memberInfo);
+##-->	print "Got a match!\n";
+##-->	print Dumper( $memberInfo);
 	}
 
 	return $memberInfo;
@@ -403,7 +403,7 @@ sub getLoginIdForUID( $)
 #------------------------------------------------------------------------------
 BEGIN
 {
-	$DBFilename = "./members.db";
+	$DBFilename = "./directory.db";
 	initDB();
 }
 

@@ -1,0 +1,26 @@
+<link rel="stylesheet" href="/phonetree/site.css">
+
+<nav id="mainMenu">
+	<a href="/phonetree/index"><img src="/phonetree/PhoneTreeIcon.png"></a>
+	<a href="/phonetree/editMembers">Edit Members</a>
+	<a href="/phonetree/editGroups">Edit Groups</a>
+	<div class="submenu">
+		<button class="submenuButton">Messages⏷</button>
+		<div class="submenuContent">
+			<a href="/phonetree/sendMessage">Send message now</a>
+			<a href="/phonetree/scheduled">Schedule a message</a>
+		</div>
+	</div>
+	<div class="submenu" id="gearMenu">
+		<span class="submenuButton">
+			<img id="gear" src="/phonetree/images/gear64.png">
+		</span>
+		<div class="submenuContent rightEdge">
+			<a href="/phonetree/config">System Settings</a>
+			<a onclick="makeABackup();return false;" >Make Backup</a>
+			<a href="/phonetree/restore">Restore Backup</a>
+			<a href="/phonetree/logoff">Log off</a>
+		</div>
+	</div>
+</nav>
+

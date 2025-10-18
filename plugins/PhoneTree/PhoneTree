@@ -1,0 +1,191 @@
+#!/usr/bin/perl
+
+use warnings;
+use strict;
+
+use Data::Dumper;
+
+use JSON;
+
+use lib "./";
+use lib "./plugins";
+
+use Common::CS_Config;
+
+use PhoneTree::Members;
+
+use File::Copy;
+use Mojolicious::Lite;
+
+
+#main:
+{
+	#------------------------------------------------------------------------------
+	#	get '/'
+	#------------------------------------------------------------------------------
+	get '/' => sub
+	{
+		my ($self) = @_;
+	
+
+		$self->render( 'index');
+	};
+
+
+	#------------------------------------------------------------------------------
+	#  get '/index' 
+	#------------------------------------------------------------------------------
+	get '/index' => sub
+	{
+		my ($self) = @_;
+
+		$self->redirect_to( '/');
+	};
+
+	#------------------------------------------------------------------------------
+	#	get '/editMembers'
+	#------------------------------------------------------------------------------
+	get '/editMembers' => sub
+	{
+		my ($self) = @_;
+
+		$self->render( 'editMembers');
+	};
+
+	#------------------------------------------------------------------------------
+	#	post '/addMember' 
+	#------------------------------------------------------------------------------
+	post '/addMember' => sub
+	{
+		my ( $self) = @_;
+
+		my $firstName =  $self->param( 'firstname');
+		my $lastName =  $self->param( 'lastname');
+		my $homephone = $self->param( 'landline');
+		my $cellphone = $self->param( 'cellphone');
+		my $email = $self->param( 'email');
+		my $tryFirst = $self->param( 'tryFirst');
+		my $trySecond = $self->param( 'trySecond');
+		my $tryThird = $self->param( 'tryThird');
+		my $callAll = ( $self->param('SendMsgs') eq 'toAll') ? 1 : 0;
+		my $rowid = 'new';
+		
+
+		writeContactInfo( {
+							firstname => $firstName,
+							lastname =>  $lastName,
+							homephone => $homephone,
+							cell => $cellphone,
+							email => $email,
+							tryFirst => $tryFirst,
+							trySecond => $trySecond,
+							tryThird => $tryThird,
+							callAll => $callAll,
+							rowid => $rowid
+						  }
+						 );
+
+
+		$self->render( json => { saved => 1, name => "$firstName $lastName"} );
+	};
+
+	#------------------------------------------------------------------------------
+	#	post '/updateMember' 
+	#------------------------------------------------------------------------------
+	post '/updateMember' => sub
+	{
+		my ( $self) = @_;
+
+		my $firstName =  $self->param( 'firstname');
+		my $lastName =  $self->param( 'lastname');
+		my $homephone = $self->param( 'landline');
+		my $cellphone = $self->param( 'cellphone');
+		my $email = $self->param( 'email');
+		my $tryFirst = $self->param( 'tryFirst');
+		my $trySecond = $self->param( 'trySecond');
+		my $tryThird = $self->param( 'tryThird');
+		my $callAll = ( $self->param('SendMsgs') eq 'toAll') ? 1 : 0;
+		my $rowid = $self->param( 'rowid');
+		
+
+		writeContactInfo( {
+							firstname => $firstName,
+							lastname =>  $lastName,
+							homephone => $homephone,
+							cell => $cellphone,
+							email => $email,
+							tryFirst => $tryFirst,
+							trySecond => $trySecond,
+							tryThird => $tryThird,
+							callAll => $callAll,
+							rowid => $rowid
+						  }
+						 );
+
+
+		$self->render( json => { saved => 1, name => "$firstName $lastName"} );
+	};
+
+	#------------------------------------------------------------------------------
+	#	post '/removeMember' 
+	#------------------------------------------------------------------------------
+	post '/removeMember' => sub
+	{
+		my $self = shift( @_);
+
+		my $json = $self->req->json();
+
+		my $rowid = $json->{rowid};
+		
+		print "\nAsked to delete row $rowid\n";
+
+		my $deleted = deleteMember( $rowid);
+
+		$self->render( json => { saved => $deleted});
+	};
+
+	#------------------------------------------------------------------------------
+	#	websocket '/getContacts'
+	#		This method is called to get a list of all contacts.  It returns a hash
+	#		where the keys are the contact ID.
+	#------------------------------------------------------------------------------
+	websocket '/getContacts' => sub
+	{
+		my $self = shift;
+		my $list = readContacts();
+		$self->send( {json => $list});
+	};
+
+	#------------------------------------------------------------------------------
+	#	websocket '/getContactInfo'
+	#		This method is called to get the information about a specific contact,
+	#		identified by the ID.
+	#------------------------------------------------------------------------------
+	websocket '/getContactInfo' => sub
+	{
+		my $self = shift;
+
+		##
+		##  See if we got a message
+		##
+		$self->on( json => sub
+					{
+						my ($self, $rowid) = @_;
+						
+						my $info = readContactInfo( $rowid);
+
+						print "Sending:\n" . Dumper( $info) . "\n\n";
+						##
+						##  Send back the response
+						##
+						$self->send( {json => $info});
+					}
+				  );
+	};
+
+	app->config( hypnotoad=>{listen =>['http://*:3000']});
+	app->secrets( ['Your mileage may vary']);
+	return app->start;
+}
+
+

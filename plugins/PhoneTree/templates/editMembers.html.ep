@@ -1,0 +1,428 @@
+<html>
+
+<head>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+  <link rel="stylesheet" href="/phonetree/site.css">
+</head>
+
+<script src="/common/Dialog.js"></script>
+<script src="/common/loadNav.js"> </script>
+
+<script>
+//==============================================================================
+//  function addMember()
+//==============================================================================
+function addMember()
+{
+	if ( !validateForm())
+	{
+		return;
+	}
+
+	//
+	//  Get the form
+	//
+	let form = document.getElementById( "OneContact-form");
+	let formData = new FormData( form);
+
+	const fetchOptions = {
+							method: "POST",
+							body:  formData
+						 };
+
+	let url =  '<%=url_for('addMember')->to_abs%>';
+
+	fetch( url, fetchOptions)
+		.then( response => response.json())
+		.then( data => {
+					if ( data.saved)
+					{	
+					   Dialog.Notify( { title: "Added", text: data.name, showFor: 1000 }).then( ()=>
+						{
+							form.reset();
+							window.location.reload();
+						});
+					}
+					else
+					{
+						alert( "There was a problem: " + data.message);
+					}
+				}
+			 );
+}
+
+//==============================================================================
+//  function updateMember()
+//==============================================================================
+function updateMember()
+{
+	if ( !validateForm())
+	{
+		return;
+	}
+
+	//
+	//  Get the form
+	//
+	let form = document.getElementById( "OneContact-form");
+	let formData = new FormData( form);
+
+	const fetchOptions = {
+							method: "POST",
+							body:  formData
+						 };
+
+	let url =  '<%=url_for('updateMember')->to_abs%>';
+
+	fetch( url, fetchOptions)
+		.then( response => response.json())
+		.then( data => {
+					if ( data.saved)
+					{	
+					   Dialog.Notify( { title: "Updated", text: data.name, showFor: 1000 }).then( ()=>
+						{
+							form.reset();
+							window.location.reload();
+						});
+					}
+					else
+					{
+						alert( "There was a problem: " + data.message);
+					}
+				}
+			 );
+}
+
+
+//------------------------------------------------------------------------------
+//  function removeMember()
+//------------------------------------------------------------------------------
+function removeMember()
+{
+    let list = document.getElementById( 'memberList');
+    let selectedIndex = list.selectedIndex;
+    let item = list.options[selectedIndex];
+
+	if ( item == undefined)
+	{
+		Dialog.Alert( { title: "Select Member", text: "You must first select a member from the contact list before pressing Delete." }).then( ()=>
+			{
+				 window.location.reload();
+				 return;
+			});
+		return;
+	}
+
+    let id = item.value;
+    
+    showContactInfo( id);
+
+	let name = list.selectedOptions[0].text;
+
+	Dialog.Confirm( {title: "Remove Member", text: "Are you sure you want to remove\n<memberName>" + name + "</memberName>\nfrom the contact list?"}).then( (answer) =>
+		{
+			if ( answer)
+			{
+				const fetchOptions = {
+										method: "POST",
+										body:  '{ "rowid": "' + id + '"}'
+									 };
+
+				let url =  "/phonetree/removeMember";
+
+				fetch( url, fetchOptions)
+					.then( response => response.json())
+					.then( data => {
+							if ( data.saved)
+							{	
+							   Dialog.Notify( { title: "Removed ", text: name, showFor: 1000 }).then( ()=>
+								{
+									window.location.reload();
+								});
+							}
+							else
+							{
+								alert( "There was a problem removing " + name + " from the list.");
+							}
+
+						 });
+			}
+		});
+}
+
+
+//==============================================================================
+//  function validateForm()
+//		This function checks to see that the required fields are entered and in
+//		the expected format.  It returns true if everything is okay
+//==============================================================================
+function validateForm()
+{
+	let  result = true;	 // Hope for the best
+
+	let fields = [
+				 	{id:'firstname', message: 'The first name is required.'}, 
+					{id:'lastname', message: 'The last name is required.'}, 
+					{id:'landline', message: 'Please enter a phone number in the format: xxx-xxx-xxxx'},
+					{id:'cellphone',message: 'Please enter a phone number in the format: xxx-xxx-xxxx'},
+					{id: 'email', message: 'Please enter a valid email address.'}
+				];
+
+	let validFieldCount = 0; //  At least 3 are needed -- full name and at least one contact
+
+	for( const field of fields)
+	{
+		let input = document.getElementById( field.id);
+		if ( !input.checkValidity())
+		{
+			result = false;
+			input.focus();
+			Dialog.Notify( { title: "Invalid entry", text: field.message, showFor: 2000 });
+			break;
+		}
+
+		if ( input.value.length)
+		{
+			validFieldCount++;
+		}
+	}
+
+	if ( result && validFieldCount < 3)
+	{
+		document.getElementById( 'landline').focus();
+		Dialog.Notify( { title: "Missing entry", text: "You must enter at least one means of contact.", showFor: 2000 });
+		result = false;
+	}
+
+	return result;
+}
+
+//==============================================================================
+//  function refreshContactList()
+//  	This function refreshes the list of member contacts
+//==============================================================================
+function refreshContactList()
+{
+	let select = document.getElementById( 'memberList');
+
+	//
+	//  First clear the list
+	//
+	while( select.options.length > 0)
+	{
+		select.remove(0);
+	}
+
+	//
+	//  Next, get the current contact list
+	//
+	var ws;
+	var url;
+
+	if ( window.location.protocol == 'https:')
+	{
+		url = 'wss://' + window.location.host + '/phonetree/getContacts';
+	}
+	else
+	{
+		url = 'ws://' + window.location.host + '/phonetree/getContacts';
+	}
+	ws = new WebSocket( url);
+
+	ws.onopen = (event) => 
+	{
+		ws.send('');
+	};
+
+	ws.onerror = (event) =>
+	{
+		ws.close();
+		ws = new WebSocket( url);
+		ws.onopen = (event) => 
+		{
+			ws.send('');
+		};
+	};
+
+	ws.onmessage = (msg) =>
+	{
+		let reply = JSON.parse( msg.data);
+		let select = document.getElementById( 'memberList');
+
+		reply.forEach( (row) =>
+			{
+				let option = new Option( row.firstname + " " + row.lastname, row.rowid);
+				select.add( option, undefined);
+			});
+
+		ws.close();
+	};
+}
+
+//==============================================================================
+//  function showContactInfo()
+//		This function retrieves the contact information for the selected member
+//		in the memberList.
+//==============================================================================
+function showContactInfo()
+{
+	let select = document.getElementById( 'memberList');
+	let id = select.value;
+
+	var ws;
+	var url;
+
+	if ( window.location.protocol == 'https:')
+	{
+		url = 'wss://' + window.location.host + '/phonetree/getContactInfo';
+	}
+	else
+	{
+		url = 'ws://' + window.location.host + '/phonetree/getContactInfo';
+	}
+	ws = new WebSocket( url);
+
+	ws.onopen = (event) => 
+	{
+		ws.send( id);
+	};
+
+	ws.onerror = (event) =>
+	{
+		ws.close();
+		ws = new WebSocket( url);
+		ws.onopen = (event) => 
+		{
+			ws.send( id);
+		};
+	};
+
+	ws.onmessage = (msg) =>
+	{
+		let reply = JSON.parse( msg.data);
+
+		updateMemberDialog( reply);
+		ws.close();
+	};
+}
+
+//==============================================================================
+//  function updateMemberDialog( info)
+//		This function updates the dialog to display the provided information.
+//==============================================================================
+function updateMemberDialog( info)
+{
+	document.getElementById( 'id').value = info.rowid;
+	document.getElementById( 'firstname').value = info.firstname;
+	document.getElementById( 'lastname').value = info.lastname;
+	document.getElementById( 'landline').value = info.homephone;
+	document.getElementById( 'cellphone').value = info.cell;
+	document.getElementById( 'email').value = info.email;
+	document.getElementById( 'tryFirst').value = info.tryFirst;
+	document.getElementById( 'trySecond').value = (info.trySecond != '') ? info.trySecond : 'none';
+	document.getElementById( 'tryThird').value = (info.tryThird != '') ? info.tryThird : 'none';
+	if ( info.callAll == 0)
+	{
+		document.forms['OneContact-form'].elements['SendMsgs'][0].checked = true;
+	}
+	else
+	{
+		document.forms['OneContact-form'].elements['SendMsgs'][1].checked = true;
+	}
+}
+
+window.addEventListener( "load", refreshContactList);
+
+</script>
+
+
+<body>
+	<div id="navbar">
+	</div>
+
+<h1>Edit Members</h1>
+
+<p id="instructions">
+	To add a new member, enter member information in the box below and click <b>Add Member</b>.
+	To edit a members information, select the member name from the box on the left, edit it, and click <b>Update Member</b>.
+	To remove a member from the list, select the member name and click <b>Delete Member</b>.
+</p>
+
+<div id="screen">
+	<div id="list">
+		<select name="members" class="nameList" id="memberList" size="11" onChange="showContactInfo()">
+		</select>
+	</div>
+	<div id="stacked">
+		<div id="container">
+			<form id="OneContact-form" action="<%=url_for('insert')->to_abs%>" method="post">
+				<input id="id" name="rowid" type="number" style="display:none" value="-1">
+				<div id="aligned">
+					<label for="firstname">First Name:</label>
+					<input type="text" name="firstname" id="firstname" placeholder="First Name" tabindex="1" required class="txtinput name" autofocus>
+					<br>
+					<label for="lastname">Last Name:</label>
+					<input type="text" name="lastname" id="lastname" placeholder="Last Name" tabindex="2" required class="txtinput name">
+					<br>
+					<label for="landline">Telephone:</label>
+					<input type="tel" name="landline" id="landline" placeholder="Home Phone xxx-xxx-xxxx" tabindex="3" class="txtinput" pattern="\d{3}-?\d{3}-?\d{4}" >
+					<br>
+					<label for="cellphone">Cell Phone:</label>
+					<input type="tel" name="cellphone" id="cellphone" placeholder="Cell Phone xxx-xxx-xxxx" tabindex="4" class="txtinput" pattern="\d{3}-?\d{3}-?\d{4}">
+					<br>
+					<label for="email">Email:</label>
+					<input type="email" name="email" id="email" placeholder="Email Address" tabindex="5" class="txtinput" pattern=".{1,}@.{1,}\..{2,}$">
+				</div>
+
+				<div id="aside">
+					<fieldset>
+						<legend>Contact Order:</legend>
+						<div id="contactPref">
+							<label for="tryFirst">First contact via:</label>
+							<select name="tryFirst" id="tryFirst" required tabindex="6">
+								<option value="phone">Voice message</option>
+								<option value="text">Text message</option>
+								<option value="email">Email</option>
+							</select>
+						</div>
+						<div id="contactPref">
+							<label for="trySecond">Then contact via:</label>
+							<select name="trySecond" id="trySecond" tabindex="7">
+								<option value="none"></option>
+								<option value="phone">Voice message</option>
+								<option value="text">Text message</option>
+								<option value="email">Email</option>
+							</select>
+						</div>
+						<div id="contactPref">
+							<label for="contactPrefLabel">Finally contact via:</label>
+							<select name="tryThird" id="tryThird" tabindex="8">
+								<option value="none"></option>
+								<option value="phone">Voice message</option>
+								<option value="text">Text message</option>
+								<option value="email">Email</option>
+							</select>
+						</div>
+					</fieldset>
+
+					<div id="sendMessages">
+						<fieldset>
+							<legend>Send Messages:</legend>
+							<input type="radio" name="SendMsgs" value="untilReceived" checked tabindex="9">To first available in the order above<br>
+							<input type="radio" name="SendMsgs" value="toAll">To every type listed above
+						</fieldset>
+					</div>
+				</div>
+			</form>
+			::about
+		</div>
+		<div id="buttons">
+			<button type="button" onclick="addMember()">Add Member</button -->
+			<button type="button" onclick="updateMember()">Update Member</button>
+			<button type="button" onclick="removeMember()">Delete Member</button>
+		</div>
+	</div>
+</div>
+</body>
+</html>
+
