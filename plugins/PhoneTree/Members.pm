@@ -5,7 +5,7 @@ package PhoneTree::Members;
 
 require Exporter;
 @ISA = qw( Exporter);
-@EXPORT = qw( readMembers addMember deleteMember writeContactInfo readContacts readContactInfo);
+@EXPORT = qw( deleteMember writeContactInfo readContacts readContactInfo readGroups saveGroup removeGroup);
 
 use warnings;
 use strict;
@@ -32,22 +32,22 @@ sub initDB()
 	
 	$dbh->do( "create table if not exists Contacts
 					(
-						lastname varchar(100),
-						firstname varchar(100),
-						email varchar(255),
-						homephone varchar(10),
-						cell varchar(10),
+						lastname text,
+						firstname text,
+						email text,
+						homephone text,
+						cell text,
 						callAll int,
-						tryFirst varchar(6),
-						trySecond varchar(6),
-						tryThird varchar(6)
+						tryFirst text,
+						trySecond text,
+						tryThird text
 					)"
 			);
 
 	$dbh->do( 'CREATE TABLE if not exists Groups
 					(
-						name varchar(255), 
-						members varchar(6000)
+						name text,
+						members text
 					)'
 			);
 	closeDB();
@@ -166,6 +166,90 @@ sub deleteMember($)
 	openDB();
 	
 	my $rowsDeleted = $dbh->do( 'Delete from Contacts where rowid=?', undef, $rowid);
+	closeDB();
+
+	return( $rowsDeleted);
+}
+
+#------------------------------------------------------------------------------
+#  sub	readGroups()
+#  		This function returns an arrayref of the arrayrefs of the names of all
+#  		groups. ($r->[0]->[0] = 'name1')
+#------------------------------------------------------------------------------
+sub	readGroups()
+{
+	openDB();
+
+	my $groupList = $dbh->selectall_arrayref( "select distinct name from Groups order by name asc");
+
+	closeDB();
+	return $groupList;
+}
+
+#------------------------------------------------------------------------------
+#  sub saveGroup($groupName, $memberNameList)
+#		This method first deletes any entries for the named group.  It then
+#		adds each member included in the array reference, member list, to the
+#		groups table as a member of the named group.  If successful, it returns
+#		true. If unsuccessful, the delete is rolled back and false is returned.
+#------------------------------------------------------------------------------
+sub saveGroup($$)
+{
+	my ( $groupName, $memberNameList) = @_;
+	my $rc = 1;  ## Hope for the best
+
+	openDB();
+
+	##
+	##  First, begin a transaction
+	##
+	$dbh->begin_work;
+
+	##
+	##  Delete all entries for the named group
+	##
+	$dbh->do( "delete from groups where name=?", undef, $groupName);
+
+	my $sth = $dbh->prepare( "insert into Groups ( name, members) values (?,?)");
+
+	foreach my $member ( @{$memberNameList})
+	{
+		$sth->bind_param( 1, $groupName);
+		$sth->bind_param( 2, $member);
+		$sth->execute();
+		if( $sth->err)
+		{
+			$rc = 0;
+			print STDERR "DB ERROR!  $sth->err:  $sth->errstr\n";
+			last;
+		}
+		
+	}
+
+	if ( $rc)
+	{
+		$dbh->commit();
+	}
+	else
+	{
+		$dbh->rollback();
+	}
+	closeDB();
+	return $rc;
+}
+
+#------------------------------------------------------------------------------
+#  sub removeGroup( $groupName)
+#  		This method removes the group indicated by the groupName from the
+#  		Groups table.  It returns the number of rows deleted.
+#------------------------------------------------------------------------------
+sub removeGroup($)
+{
+	my $groupName = shift( @_);
+
+	openDB();
+	
+	my $rowsDeleted = $dbh->do( 'Delete from Groups where name=?', undef, $groupName);
 	closeDB();
 
 	return( $rowsDeleted);

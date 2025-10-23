@@ -1,0 +1,415 @@
+<html>
+
+<head>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+  <link rel="stylesheet" href="/phonetree/site.css">
+</head>
+
+<script src="/common/Dialog.js"></script>
+<script src="/common/loadNav.js"> </script>
+
+
+<script>
+
+//==============================================================================
+//  function multiSelectWithoutCtrl( selector)
+//		This function sets an event handler to toggle the selected state of a
+//		multiple select option without reseting all other options.  (Like
+//		pressing CTRL while selecting an option.)
+//==============================================================================
+function multiSelectWithoutCtrl( selector)
+{
+	let options = document.getElementsByClassName( selector);
+	for ( const option of options)
+	{
+		option.addEventListener( "mousedown",
+			function(e)
+			  {
+				  if ( !e.shiftKey)
+				  {
+					  console.log( "YO!");
+					  e.preventDefault();
+				  }
+				  option.parentElement.focus();
+				  this.selected = !this.selected;
+				  return false;
+			  }
+			);
+
+	}
+}
+
+//==============================================================================
+//  function selectAllMembers()
+//		This function selects all entries in the members list
+//==============================================================================
+function selectAllMembers()
+{
+	let list = document.getElementById( 'groupMembers');
+	for( let option of list.options)
+	{
+		option.selected = true;
+	}
+}
+
+//==============================================================================
+//  function unSelectAllMembers()
+//		This function unselects all entries in the members list
+//==============================================================================
+function unSelectAllMembers()
+{
+	let list = document.getElementById( 'groupMembers');
+	for( let option of list.options)
+	{
+		option.selected = false;
+	}
+}
+
+//==============================================================================
+//  function saveGroup()
+//  	This function saves the named group and its members to the list of groups.
+//==============================================================================
+function saveGroup()
+{
+	//
+	//  First, get the group name
+	//
+	let groupName = document.getElementById("groups").value;
+
+	//
+	//  Then get the list of members
+	//
+	let members = [];
+	let list = document.getElementById( 'groupMembers');
+	for( let option of list.options)
+	{
+		if( option.selected)
+		{
+			members.push( option.value);
+		}
+	}
+	const fetchOptions = {
+							method: "POST",
+							body:  '{ "group": "' + groupName + '", "members": ' + JSON.stringify( members) + '}'
+						 };
+
+	let url =  "/phonetree/saveGroup";
+
+	fetch( url, fetchOptions)
+		.then( response => response.json())
+		.then( data => {
+				if ( data.saved)
+				{	
+				   Dialog.Notify( { title: "Added ", text: groupName, showFor: 1000 }).then( ()=>
+					{
+						window.location.reload();
+					});
+				}
+				else
+				{
+					alert( "There was a problem adding " + groupName + ".");
+				}
+
+			 });
+	
+}
+
+//==============================================================================
+//  function removeGroup()
+//==============================================================================
+function removeGroup()
+{
+    let group = document.getElementById( 'groups').value;
+
+	if ( group == undefined)
+	{
+		Dialog.Alert( { title: "Select Group", text: "You must first select a group name from the list before pressing Delete." }).then( ()=>
+			{
+				 window.location.reload();
+				 return;
+			});
+		return;
+	}
+
+	Dialog.Confirm( {title: "Remove Group", text: "Are you sure you want to remove the group\n<memberName>" + group + "</memberName>\nfrom the group list?"}).then( (answer) =>
+		{
+			if ( answer)
+			{
+				const fetchOptions = {
+										method: "POST",
+										body:  '{ "group": "' + group + '"}'
+									 };
+
+				let url =  "/phonetree/removeGroup";
+
+				fetch( url, fetchOptions)
+					.then( response => response.json())
+					.then( data => {
+							if ( data.deleted)
+							{	
+							   Dialog.Notify( { title: "Removed ", text: group, showFor: 1000 }).then( ()=>
+								{
+									window.location.reload();
+								});
+							}
+							else
+							{
+								alert( "There was a problem removing " + group + " from the list.");
+							}
+
+						 });
+			}
+		});
+}
+
+//==============================================================================
+//  function readGroupList()
+//		This asyncrhonous function returns a Promise.  On completion, the result
+//		is an array of group names.
+//==============================================================================
+function readGroupList()
+{
+	return new Promise((resolve, reject) =>
+		{
+			var ws;
+			var url;
+
+			if ( window.location.protocol == 'https:')
+			{
+				url = 'wss://' + window.location.host + '/phonetree/getGroups';
+			}
+			else
+			{
+				url = 'ws://' + window.location.host + '/phonetree/getGroups';
+			}
+			ws = new WebSocket( url);
+
+			ws.onopen = (event) => 
+			{
+				ws.send('');
+			};
+
+			ws.onerror = (event) =>
+			{
+				ws.close();
+				ws = new WebSocket( url);
+				ws.onopen = (event) => 
+				{
+					ws.send('');
+				};
+			};
+
+			ws.onmessage = (msg) =>
+			{
+				let reply = JSON.parse( msg.data);
+				resolve( reply);
+			};
+		}
+	);
+}
+
+//==============================================================================
+//  function readContactList()
+//		This asyncrhonous function returns a Promise.  On completion, the result
+//		is an array of contact names.
+//==============================================================================
+function readContactList()
+{
+	return new Promise((resolve, reject) =>
+		{
+			var ws;
+			var url;
+
+			if ( window.location.protocol == 'https:')
+			{
+				url = 'wss://' + window.location.host + '/phonetree/getContacts';
+			}
+			else
+			{
+				url = 'ws://' + window.location.host + '/phonetree/getContacts';
+			}
+			ws = new WebSocket( url);
+
+			ws.onopen = (event) => 
+			{
+				ws.send('');
+			};
+
+			ws.onerror = (event) =>
+			{
+				ws.close();
+				ws = new WebSocket( url);
+				ws.onopen = (event) => 
+				{
+					ws.send('');
+				};
+			};
+
+			ws.onmessage = (msg) =>
+			{
+				let reply = JSON.parse( msg.data);
+				resolve( reply);
+			};
+		}
+	);
+}
+
+//==============================================================================
+//  function refreshGroupList()
+//  	This function refreshes the list of group names
+//==============================================================================
+function refreshGroupList()
+{
+	let datalist = document.getElementById( 'groupName');
+ 
+	//
+	//  First clear the list
+	//
+	while( datalist.options.length > 0)
+	{
+		datalist.removeChild( datalist.options[0]);
+	}
+
+	//
+	//  Next, get the current group list
+	//
+	readGroupList()
+		.then( (list) =>
+			{
+				let datalist = document.getElementById( 'groupName');
+
+				list.forEach( (row) =>
+					{
+						let option = new Option( row[0], row[0]);
+						datalist.appendChild( option);
+					});
+
+			});
+
+}
+
+//==============================================================================
+//  function refreshGroupMemberList()
+//  	This function refreshes the list of group member names.
+//==============================================================================
+function refreshGroupMemberList()
+{
+	let select = document.getElementById( 'groupMembers');
+
+	//
+	//  First clear the list
+	//
+	while( select.options.length > 0)
+	{
+		select.remove(0);
+	}
+
+	//
+	//  Next, get the current group list
+	//
+	readGroupList()
+		.then( (list) =>
+			{
+				let select = document.getElementById( 'groupMembers');
+
+				list.forEach( (row) =>
+					{
+						let option = new Option( row[0], row[0]);
+						option.className = "multiSel";
+						option.setAttribute( "type", "group");
+						select.add( option);
+					});
+
+			})
+		.then( () =>
+			{
+				readContactList()
+					.then(( list) =>
+						{
+							let select = document.getElementById( 'groupMembers');
+
+							list.forEach( (row) =>
+								{
+									let option = new Option( row.firstname + " " + row.lastname, row.rowid);
+									option.className = "multiSel";
+									option.setAttribute( "type", "member");
+									select.add( option);
+								});
+
+							multiSelectWithoutCtrl('multiSel');
+						});
+			});
+
+
+}
+
+
+//
+//  Set the modified event handler for the member list once the page has loaded
+//
+window.addEventListener( "load", function ()
+	{
+		refreshGroupList();
+		refreshGroupMemberList();
+	});
+</script>
+
+
+<body>
+	<div id="navbar">
+	</div>
+
+<h1>Edit Groups</h1>
+
+<p id="instructions">
+	Enter the name of the new group, or select the name of an existing group from the box on the left.
+	Then, select the names of those who are a part of that group from the box on the right.
+	Press the <b>Save Group</b> button when all group members are selected.
+	To remove a group, select the group name and press <b>Delete Group</b>.
+</p>
+
+<div id="screen" style="justify-content:center">
+	<div class="groupColumnItem">
+		<div class="groupRowItem">
+			<div class="flexCentered">
+				<span class="withDropdown">
+				<label for="groups">Group Name:</label>
+				<input name="groups" id="groups" list="groupName" tabindex="1" placeholder="Enter group name...">
+				<datalist id="groupName">
+					<option value="Choir">Choir</option>
+					<option value="Trustees">Trustees</option>
+					<option value="SPR">SPR</option>
+				</datalist>
+				</span>
+			</div>
+		</div>
+		<div class="groupRowItem">
+			<div id="buttons">
+				<button type="button" onclick="saveGroup()">Save Group</button -->
+				<button type="button" onclick="removeGroup()">Delete Group</button>
+			</div>
+		</div>
+	</div>
+	
+	<div class="groupColumnItem">
+		<div class="groupRowItem">
+			<select name="groupMembers" class="groupMembers" id="groupMembers" size="11" multiple>
+				<option value="Choir" class="multiSel" type="group">Choir</option>
+				<option value="Bob 41" class="multiSel" type="member">Bob</option>
+				<option value="Gus 41" class="multiSel" type="member">Gus</option>
+				<option value="Sam 41" class="multiSel" type="member">Sam</option>
+				<option value="Joe 41" class="multiSel" type="member">Joe</option>
+				<option value="Will 41" class="multiSel" type="member">William A. Stanley</option>
+			</select>
+		</div>
+		<div class="groupRowItem">
+			<div class="selectAllButtons">
+			<button onClick="selectAllMembers()">Select all</button>
+			<button onClick="unSelectAllMembers()">Select none</button>
+			</div>
+		</div>
+	</div>
+</div>
+</body>
+</html>
+

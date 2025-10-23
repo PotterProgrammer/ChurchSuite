@@ -51,6 +51,17 @@ use Mojolicious::Lite;
 
 		$self->render( 'editMembers');
 	};
+	
+	#------------------------------------------------------------------------------
+	#	get '/editGroups'
+	#------------------------------------------------------------------------------
+	get '/editGroups' => sub
+	{
+		my ($self) = @_;
+
+		$self->render( 'editGroups');
+	};
+
 
 	#------------------------------------------------------------------------------
 	#	post '/addMember' 
@@ -145,6 +156,54 @@ use Mojolicious::Lite;
 	};
 
 	#------------------------------------------------------------------------------
+	#	post '/saveGroup' 
+	#		This post expects to receive group member information in the following 
+	#		JSON format:
+	#			{  group: groupName, members:[ name1, name2,...]}
+	#		It then proceeds to update the Groups table so that the provided
+	#		members are the members of the named group.
+	#------------------------------------------------------------------------------
+	post '/saveGroup' => sub
+	{
+		my $self = shift( @_);
+
+		my $json = $self->req->json();
+
+		my $groupName = $json->{group};
+		my $members = $json->{members};
+		
+		print "\nAsked to add a new group named $groupName consisting of the follwing members:\n\t". join( "\n\t", @{$members}) . "\n\n";
+
+		my $added = saveGroup( $groupName, $members);
+
+		$self->render( json => { saved => $added});
+	};
+
+	#------------------------------------------------------------------------------
+	#	post '/removeGroup' 
+	#		This post expects to receive group member information in the following 
+	#		JSON format:
+	#			{  group: groupName}
+	#		It then removes the named group from the Groups table.
+	#------------------------------------------------------------------------------
+	post '/removeGroup' => sub
+	{
+		my $self = shift( @_);
+
+		my $json = $self->req->json();
+
+		my $groupName = $json->{group};
+		
+		print "\nAsked to remove the roup named $groupName\n";
+
+		my $added = removeGroup( $groupName);
+
+		$self->render( json => { deleted => $added});
+	};
+
+
+
+	#------------------------------------------------------------------------------
 	#	websocket '/getContacts'
 	#		This method is called to get a list of all contacts.  It returns a hash
 	#		where the keys are the contact ID.
@@ -181,6 +240,18 @@ use Mojolicious::Lite;
 						$self->send( {json => $info});
 					}
 				  );
+	};
+
+	#------------------------------------------------------------------------------
+	#	websocket '/getGroups'
+	#		This method is called to get a list of all contacts.  It returns an
+	#		array where each row contains a group name.
+	#------------------------------------------------------------------------------
+	websocket '/getGroups' => sub
+	{
+		my $self = shift;
+		my $list = readGroups();
+		$self->send( {json => $list});
 	};
 
 	app->config( hypnotoad=>{listen =>['http://*:3000']});

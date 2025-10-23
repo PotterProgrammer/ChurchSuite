@@ -2,9 +2,13 @@ body
 {
 	background-color: #0000ec;
 	color: white;
-	font-family: Hevetica, Arial, sans-serif;
 	font-size: 13pt;
 	margin-left: 0;
+}
+
+body, input, textarea, button, option
+{
+	font-family: Helvetica,Arial,sans-serif;
 }
 
 h1
@@ -449,7 +453,10 @@ photo img
 
 button
 {
-	font-size:12pt;
+	font-size: 12pt;
+	padding-left: .5em;
+	padding-right: .5em;
+	padding-top: .2em;
 }
 
 fauxbutton
@@ -550,7 +557,7 @@ adminNamesList
 
 #screen
 {
-	display:flex;;
+	display:flex;
 }
 
 #container 
@@ -620,14 +627,12 @@ adminNamesList
 	font-size:11pt;
 	display: inline-block;
 	width: 5.5em;
-	text-align: right;
 }
 
 #aside label
 {
 	display: inline-block;
 	width: 8.5em;
-	text-align: left;
 }
 
 
@@ -652,7 +657,7 @@ adminNamesList
 
 #OneContact-form .txtinput 
 { 
-	font-family: "Helvetica Neue", Arial, sans-serif;
+	font-family: Helvetica,Arial,sans-serif;
 	border-style: solid;
 	border-width: 1px;
 	border-color: #dedede;
@@ -724,9 +729,94 @@ adminNamesList
 	text-align:center;
 }
 
+.flexCentered
+{
+	display:flex;
+	justify-content:center;
+	margin-bottom: 2em;
+	margin-top:4em;
+}
+
 #buttons
 {
 	display: flex;
 	justify-content: center;
 	gap: 20px
+}
+
+.groupRowItem
+{
+	flex: 1;
+	flex-direction: column;
+}
+
+.groupColumnItem
+{
+	flex: 1;
+}
+
+.groupColumnItem option:not(:checked)::before
+{
+	font-weight: 600;
+	content: "\2610\20";
+	line-height: 1.15em;
+	color: black;
+}
+
+.groupColumnItem option:checked::before
+{
+	content: "\1f5f9\20";
+	line-height: 1.15em;
+	color: black;
+	font-weight:normal;
+}
+
+.withDropdown
+{
+	position:relative;
+}
+
+.withDropdown:after
+{
+	content: "\25bc";
+	position: absolute;
+	right: 8px;
+	color: black;
+	top: 2px;
+	pointer-events: none;
+}
+
+.groupMembers
+{
+	width:12em;
+}
+
+.selectAllButtons
+{
+	width: 13em;
+	display: flex;
+	justify-content: center;
+	gap: 20px;
+}
+
+#instructions
+{
+	bottom-margin: 2em;
+}
+
+option
+{
+	font-family: Helvetica,Arial,sans-serif;
+}
+
+option[type="group"]
+{
+	color: #00a800;
+	font-weight: 600;
+}
+
+option[type="member"]
+{
+	color: black;
+	font-weight: normal;
 }
