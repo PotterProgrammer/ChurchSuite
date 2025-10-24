@@ -5,7 +5,7 @@ package PhoneTree::Members;
 
 require Exporter;
 @ISA = qw( Exporter);
-@EXPORT = qw( deleteMember writeContactInfo readContacts readContactInfo readGroups saveGroup removeGroup);
+@EXPORT = qw( deleteMember writeContactInfo readContacts readContactInfo readGroups getGroupMembers saveGroup removeGroup);
 
 use warnings;
 use strict;
@@ -47,7 +47,8 @@ sub initDB()
 	$dbh->do( 'CREATE TABLE if not exists Groups
 					(
 						name text,
-						members text
+						members text,
+						isGroup integer not null default 0
 					)'
 			);
 	closeDB();
@@ -186,6 +187,26 @@ sub	readGroups()
 	return $groupList;
 }
 
+
+#------------------------------------------------------------------------------
+#  sub	getGroupMembers( $groupName)
+#  		This function returns an arrayref of the hashrefs of all
+#  		members of the named group. ($r->[0]->{members: 'memberName', isGroup = 1})
+#------------------------------------------------------------------------------
+sub	getGroupMembers($)
+{
+	my $groupName = shift( @_);
+
+	openDB();
+
+	print "Looking for members of $groupName\n";
+
+	my $groupList = $dbh->selectall_arrayref( "select members, isGroup from Groups where name=?", {Slice =>{}}, $groupName);
+
+	closeDB();
+	return $groupList;
+}
+
 #------------------------------------------------------------------------------
 #  sub saveGroup($groupName, $memberNameList)
 #		This method first deletes any entries for the named group.  It then
@@ -210,12 +231,16 @@ sub saveGroup($$)
 	##
 	$dbh->do( "delete from groups where name=?", undef, $groupName);
 
-	my $sth = $dbh->prepare( "insert into Groups ( name, members) values (?,?)");
+	my $sth = $dbh->prepare( "insert into Groups ( name, members, isGroup) values (?,?,?)");
 
 	foreach my $member ( @{$memberNameList})
 	{
+		my $memberName = $member->{name};
+		my $isGroup = $member->{isGroup};
+
 		$sth->bind_param( 1, $groupName);
-		$sth->bind_param( 2, $member);
+		$sth->bind_param( 2, $memberName);
+		$sth->bind_param( 3, $isGroup);
 		$sth->execute();
 		if( $sth->err)
 		{

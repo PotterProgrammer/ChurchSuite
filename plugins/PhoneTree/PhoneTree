@@ -254,6 +254,36 @@ use Mojolicious::Lite;
 		$self->send( {json => $list});
 	};
 
+	#------------------------------------------------------------------------------
+	#	websocket '/getGroupMembers'
+	#		This method is called to get the member list of a specific group name.
+	#		It returns an array where each row contains the following JSON
+	#			{ members: <memberName>, isGroup: [0|1]}
+	#------------------------------------------------------------------------------
+	websocket '/getGroupMembers' => sub
+	{
+		my $self = shift;
+
+		##
+		##  See if we got a message
+		##
+		$self->on( message => sub
+					{
+						my ($self, $group) = @_;
+						
+						print "I see group $group\n";
+						my $info = getGroupMembers( $group);
+
+						print "Sending:\n" . Dumper( $info) . "\n\n";
+						##
+						##  Send back the response
+						##
+						$self->send( {json => $info});
+					}
+				  );
+	};
+
+
 	app->config( hypnotoad=>{listen =>['http://*:3000']});
 	app->secrets( ['Your mileage may vary']);
 	return app->start;

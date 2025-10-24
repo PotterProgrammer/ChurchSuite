@@ -27,7 +27,6 @@ function multiSelectWithoutCtrl( selector)
 			  {
 				  if ( !e.shiftKey)
 				  {
-					  console.log( "YO!");
 					  e.preventDefault();
 				  }
 				  option.parentElement.focus();
@@ -85,7 +84,7 @@ function saveGroup()
 	{
 		if( option.selected)
 		{
-			members.push( option.value);
+			members.push({ name: option.value, isGroup: (option.getAttribute("type") == "group")});
 		}
 	}
 	const fetchOptions = {
@@ -100,8 +99,9 @@ function saveGroup()
 		.then( data => {
 				if ( data.saved)
 				{	
-				   Dialog.Notify( { title: "Added ", text: groupName, showFor: 1000 }).then( ()=>
+				   Dialog.Notify( { title: "Saved ", text: groupName, showFor: 1000 }).then( ()=>
 					{
+						document.getElementById("groups").value = '';
 						window.location.reload();
 					});
 				}
@@ -149,6 +149,7 @@ function removeGroup()
 							{	
 							   Dialog.Notify( { title: "Removed ", text: group, showFor: 1000 }).then( ()=>
 								{
+									document.getElementById("groups").value = '';
 									window.location.reload();
 								});
 							}
@@ -255,6 +256,54 @@ function readContactList()
 }
 
 //==============================================================================
+//  function readGroupMemberList( groupName)
+//		This asyncrhonous function returns a Promise.  On completion, the result
+//		is an array of members of the named group.
+//			( {members: <memberName>, isGroup: [0|1]}
+//==============================================================================
+function readGroupMemberList( groupName)
+{
+	return new Promise((resolve, reject) =>
+		{
+			var ws;
+			var url;
+
+			if ( window.location.protocol == 'https:')
+			{
+				url = 'wss://' + window.location.host + '/phonetree/getGroupMembers';
+			}
+			else
+			{
+				url = 'ws://' + window.location.host + '/phonetree/getGroupMembers';
+			}
+			ws = new WebSocket( url);
+
+			ws.onopen = (event) => 
+			{
+				ws.send( groupName);
+			};
+
+			ws.onerror = (event) =>
+			{
+				ws.close();
+				ws = new WebSocket( url);
+				ws.onopen = (event) => 
+				{
+					ws.send( groupName);
+				};
+			};
+
+			ws.onmessage = (msg) =>
+			{
+				let reply = JSON.parse( msg.data);
+				resolve( reply);
+			};
+		}
+	);
+}
+
+
+//==============================================================================
 //  function refreshGroupList()
 //  	This function refreshes the list of group names
 //==============================================================================
@@ -282,6 +331,40 @@ function refreshGroupList()
 					{
 						let option = new Option( row[0], row[0]);
 						datalist.appendChild( option);
+					});
+
+			});
+
+}
+
+//==============================================================================
+//  function setGroupMembers()
+//==============================================================================
+function setGroupMembers()
+{
+	//
+	//  First clear the list
+	//
+	unSelectAllMembers();
+
+	//
+	//  Next, get the current members of the named group
+	//
+	let groupName = document.getElementById("groups").value;
+	readGroupMemberList( groupName)
+		.then( (list) =>
+			{
+				let select = document.getElementById( 'groupMembers');
+
+				list.forEach( (row) =>
+					{
+						let name=row.members;
+						let isGroup = (row.isGroup != 1) ? 'member' : 'group';
+						let options = document.querySelectorAll( `[value="${name}"][type="${isGroup}"]`);
+						for( let option of options)
+						{
+							option.selected = true;
+						}
 					});
 
 			});
@@ -330,7 +413,7 @@ function refreshGroupMemberList()
 
 							list.forEach( (row) =>
 								{
-									let option = new Option( row.firstname + " " + row.lastname, row.rowid);
+									let option = new Option( row.firstname + " " + row.lastname, `${row.firstname} ${row.lastname}`);
 									option.className = "multiSel";
 									option.setAttribute( "type", "member");
 									select.add( option);
@@ -362,7 +445,8 @@ window.addEventListener( "load", function ()
 <h1>Edit Groups</h1>
 
 <p id="instructions">
-	Enter the name of the new group, or select the name of an existing group from the box on the left.
+	Enter the name of the new group. Or click on the down arrow, select the
+	name of an existing group from the box on the left, and click the <b>Show Members</b> button.
 	Then, select the names of those who are a part of that group from the box on the right.
 	Press the <b>Save Group</b> button when all group members are selected.
 	To remove a group, select the group name and press <b>Delete Group</b>.
@@ -374,13 +458,14 @@ window.addEventListener( "load", function ()
 			<div class="flexCentered">
 				<span class="withDropdown">
 				<label for="groups">Group Name:</label>
-				<input name="groups" id="groups" list="groupName" tabindex="1" placeholder="Enter group name...">
+				<input name="groups" id="groups" list="groupName" tabindex="1" placeholder="Enter group name..." onchange="setGroupMembers()">
 				<datalist id="groupName">
 					<option value="Choir">Choir</option>
 					<option value="Trustees">Trustees</option>
 					<option value="SPR">SPR</option>
 				</datalist>
 				</span>
+				<button onClick="setGroupMembers()" id="memberButton">Show Members</button>
 			</div>
 		</div>
 		<div class="groupRowItem">
@@ -404,8 +489,8 @@ window.addEventListener( "load", function ()
 		</div>
 		<div class="groupRowItem">
 			<div class="selectAllButtons">
-			<button onClick="selectAllMembers()">Select all</button>
-			<button onClick="unSelectAllMembers()">Select none</button>
+			<button onClick="selectAllMembers()">Select All</button>
+			<button onClick="unSelectAllMembers()">Select None</button>
 			</div>
 		</div>
 	</div>

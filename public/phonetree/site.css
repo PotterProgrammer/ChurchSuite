@@ -820,3 +820,8 @@ option[type="member"]
 	color: black;
 	font-weight: normal;
 }
+
+#memberButton
+{
+	margin-left:1em;
+}
