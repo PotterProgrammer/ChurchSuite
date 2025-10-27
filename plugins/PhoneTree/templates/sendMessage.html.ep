@@ -1,0 +1,91 @@
+<html>
+
+<head>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+  <link rel="stylesheet" href="/phonetree/site.css">
+</head>
+
+<script src="/common/Dialog.js"></script>
+<script src="/common/loadNav.js"> </script>
+
+
+
+<body>
+	<div id="navbar">
+	</div>
+
+<h1>Send Message</h1>
+
+<p id="instructions">
+	From the boxes on the left, select one or more individuals or groups that the message should be sent to.
+	Then, in the boxes on the right, enter the message to be sent.  Note that the "<b>From</b>" and "<b>Subject</b>" entries
+	will only appear in emails that are sent.  Text messages will include only the message.  When you are finished,
+	press the "<b>Send</b>" button.
+</p>
+
+<div class="messageScreen">
+	<div class="groupCol">
+		<div>
+			<label for="groups">Groups:</label>
+			<p/>
+			<select name="groups" class="groups" id="groups" size="11" multiple>
+				<option value="Choir" class="multiSel" type="group">Choir</option>
+				<option value="SPR" class="multiSel" type="group">SPR</option>
+				<option value="Staff" class="multiSel" type="group">Staff</option>
+				<option value="Trustees" class="multiSel" type="group">Trustees</option>
+			</select>
+			<p/>
+			<div>
+				<button>Select All</button>
+				<button>Select None</button>
+			</div>
+		</div>
+	</div>
+	<div class="indivCol">
+		<div>
+			<label for="individuals">Individuals:</label>
+			<p/>
+			<select name="individuals" class="individuals" id="individuals" size="11" multiple>
+				<option value="Bob 41" class="multiSel" type="member">Bob</option>
+				<option value="Gus 41" class="multiSel" type="member">Gus</option>
+				<option value="Sam 41" class="multiSel" type="member">Sam</option>
+				<option value="Joe 41" class="multiSel" type="member">Joe</option>
+				<option value="Will 41" class="multiSel" type="member">William A. Stanley</option>
+			</select>
+			<p/>
+			<div>
+				<button>Select All</button>
+				<button>Select None</button>
+			</div>
+		</div>
+	</div>
+	<div class="messageCol">
+		<div class="messageWindow">
+			<div class="label1">
+				<label for="from">From:</label>
+			</div>
+			<div class="from">
+				<input type="text" name="from" id="name" placeholder="From (for email)">
+			</div>
+			<div class="label2">
+				<label for="subject">Subject:</label>
+			</div>
+			<div class="subject">
+				<input type="text" name="subject" id="subject" placeholder="Subject (for email)">
+			</div>
+			<div class="label3">
+				<label for="theMessage">Message:</label>
+			</div>
+			<div class="messageText">
+				<textarea name="theMessage" id="messageText" placeholder="Message to send"></textarea>
+			</div>
+			<div class="sendButton">
+				<button onClick="sendMessage()">Send Message</button>
+			</div>
+		</div>
+	</div>
+</div>
+
+</body>
+</html>
+

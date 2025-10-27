@@ -642,7 +642,8 @@ adminNamesList
 	width: fit-content;
 	padding-right: 1em;
 	box-sizing: border-box;
-	font-size: 10pt;
+	font-size: 11pt;
+	margin-top: 1em;
 }
 
 #OneContact-form select
@@ -737,6 +738,11 @@ adminNamesList
 	margin-top:4em;
 }
 
+#sendMessages
+{
+	margin-top: 2.5em;
+}
+
 #buttons
 {
 	display: flex;
@@ -824,4 +830,141 @@ option[type="member"]
 #memberButton
 {
 	margin-left:1em;
+}
+
+.messageScreen
+{
+  width: 98vw;
+  height: 15em;
+  display: grid;
+  grid-template-columns: 3em 12em 12em 1fr 3em;
+  grid-template-rows: 15em;
+  column-gap: 1.5em;
+}
+
+.messageScreen label,select,option,input,textarea
+{
+	font-size: 14pt;
+}
+.messageScreen select
+{
+	width: 11em;
+}
+
+.messageScreen option
+{
+	padding-top: .1em;
+	padding-bottom: .1em;
+}
+
+.groupCol
+{
+	grid-column-start: 2;
+	grid-column-end: 3;
+	grid-row-start: 1;
+}
+
+.groupCol p
+{
+	line-height: 0;
+	font-size: 0;
+}
+.indivCol
+{
+	grid-column-start: 3;
+	grid-column-end: 4;
+	grid-row-start: 1;
+}
+
+.indivCol p
+{
+	line-height: 0;
+	font-size: 0;
+}
+
+.messageCol
+{
+	grid-column-start: 4;
+	grid-column-end: 5;
+	grid-row-start: 1;
+}
+
+.messageWindow
+{
+	display: grid;
+	grid-template-columns: 6em minmax(4em, 13em) 1fr;
+	grid-template-rows:    0em 1em 1em 12em 1em;
+	column-gap: .5em;
+	row-gap: 1.1em;
+}
+
+.messageWindow input
+{
+	width: 100%;
+}
+
+.label1
+{
+	grid-column-start: 1;
+	grid-column-end: 2;
+	grid-row-start: 2;
+	grid-row-end: 3;
+	justify-self: right;
+}
+
+.label2
+{
+	grid-column-start: 1;
+	grid-column-end: 2;
+	grid-row-start: 3;
+	grid-row-end: 4;
+	justify-self: right;
+}
+
+.label3
+{
+	grid-column-start: 1;
+	grid-column-end: 2;
+	grid-row-start: 4;
+	grid-row-end: 5;
+	justify-self: right;
+}
+
+.from
+{
+	grid-column-start: 2;
+	grid-column-end: 3;
+	grid-row-start: 2;
+	grid-row-end: 3;
+}
+
+.subject
+{
+	grid-column-start: 2;
+	grid-column-end: 3;
+	grid-row-start: 3;
+	grid-row-end: 4;
+}
+
+.messageText
+{
+	grid-column-start: 2;
+	grid-column-end: 4;
+	grid-row-start: 4;
+	grid-row-end: 5;
+}
+
+.messageText textarea
+{
+	width: 100%;
+	height: 100%;
+}
+
+.sendButton
+{
+	grid-column-start: 2;
+	grid-column-end: 3;
+	grid-row-start: 5;
+	grid-row-end: 6;
+	justify-self:left;
 }
