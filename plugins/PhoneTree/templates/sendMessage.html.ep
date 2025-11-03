@@ -6,9 +6,63 @@
 </head>
 
 <script src="/common/Dialog.js"></script>
-<script src="/common/loadNav.js"> </script>
+<script src="/common/loadNav.js"></script>
+<script src="/common/PhoneTree.js"></script>
 
+<script>
 
+//==============================================================================
+//  function refreshGroupList()
+//==============================================================================
+function refreshGroupList()
+{
+	redrawGroupList( "groups", () => {multiSelectWithoutCtrl( 'multiSel');});
+}
+
+//==============================================================================
+//  function refreshContactsList()
+//  	This function refreshes the list of contact names.
+//==============================================================================
+function refreshContactsList()
+{
+	let select = document.getElementById( 'individuals');
+
+	//
+	//  First clear the list
+	//
+	while( select.options.length > 0)
+	{
+		select.remove(0);
+	}
+
+	readContactList()
+		.then(( list) =>
+			{
+				let select = document.getElementById( 'individuals');
+
+				list.forEach( (row) =>
+					{
+						let option = new Option( row.firstname + " " + row.lastname, row.rowid);
+						option.className = "multiSel";
+						option.setAttribute( "type", "member");
+						select.add( option);
+					});
+
+				multiSelectWithoutCtrl('multiSel');
+			});
+
+}
+
+//
+//  Set the modified event handler for the member list once the page has loaded
+//
+window.addEventListener( "load", function ()
+	{
+		refreshGroupList();
+		refreshContactsList();
+	});
+
+</script>
 
 <body>
 	<div id="navbar">
@@ -24,7 +78,7 @@
 </p>
 
 <div class="messageScreen">
-	<div class="groupCol">
+	<div class="groupCol showCheckBoxes">
 		<div>
 			<label for="groups">Groups:</label>
 			<p/>
@@ -36,12 +90,12 @@
 			</select>
 			<p/>
 			<div>
-				<button>Select All</button>
-				<button>Select None</button>
+				<button onClick="selectAllItems( 'groups')">Select All</button>
+				<button onClick="unSelectAllItems( 'groups')">Select None</button>
 			</div>
 		</div>
 	</div>
-	<div class="indivCol">
+	<div class="indivCol showCheckBoxes">
 		<div>
 			<label for="individuals">Individuals:</label>
 			<p/>
@@ -54,8 +108,8 @@
 			</select>
 			<p/>
 			<div>
-				<button>Select All</button>
-				<button>Select None</button>
+				<button onClick="selectAllItems( 'individuals')">Select All</button>
+				<button onClick="unSelectAllItems( 'individuals')">Select None</button>
 			</div>
 		</div>
 	</div>

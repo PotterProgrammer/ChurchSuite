@@ -84,6 +84,13 @@ select:disabled,option:checked
 	width: 25em;
 }
 
+.cfgselect
+{
+	max-width: 5em;
+	background-color:white;
+}
+
+
 #buttonRow
 {
 	padding-top:  3vh;
@@ -151,9 +158,16 @@ nav {
 	background-color: lightgray;
     color: blue;
     padding: 0;
-	width: 101.3%;
+	width: 101vw;
 	height: 2.3em;
 	margin-left: -10px;
+}
+
+nav *
+{
+	font-size: 13pt;
+	line-height: 13pt;
+	padding-top:  0;
 }
 
 nav a
@@ -221,7 +235,7 @@ nav ul li a:hover
 	color: black;
 	background-color: lightgray;
 	font-family: inherit;
-	margin-top: 0.6em;
+	margin-top: 0.5em;
 	margin-left: 2em;
 }
 
@@ -514,9 +528,14 @@ div#formInfo
 	color: white;
 }
 
+tr td select
+{
+	font-size: 13pt;
+	margin-bottom: 0;
+}
+
 form input
 {
-    margin-bottom: .5em;
 	font-size: 12pt;
 }
 
@@ -555,9 +574,27 @@ adminNamesList
 	font-size: 13pt;
 }
 
+.caution
+{
+	font-family: Arial,sans-serif;
+	width: 90%;
+	margin-left: 5%;
+	font-weight: bold;
+	font-size: 105%;
+	color: #c00000;
+	background-color: white;
+	padding-left: 1em;
+	margin-bottom: 0;
+}
+
 #screen
 {
 	display:flex;
+}
+
+.blue-background
+{
+	background-color: #0000ec;
 }
 
 #container 
@@ -761,7 +798,7 @@ adminNamesList
 	flex: 1;
 }
 
-.groupColumnItem option:not(:checked)::before
+.showCheckBoxes option:not(:checked)::before
 {
 	font-weight: 600;
 	content: "\2610\20";
@@ -769,7 +806,7 @@ adminNamesList
 	color: black;
 }
 
-.groupColumnItem option:checked::before
+.showCheckBoxes option:checked::before
 {
 	content: "\1f5f9\20";
 	line-height: 1.15em;

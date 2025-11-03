@@ -513,6 +513,11 @@ form input
 	font-size: 12pt;
 }
 
+tr td input
+{
+	margin-bottom: 0;
+}
+
 memberName
 {
     font-weight: bold;

@@ -7,6 +7,7 @@
 
 <script src="/common/Dialog.js"></script>
 <script src="/common/loadNav.js"> </script>
+<script src="/common/PhoneTree.js"> </script>
 
 <script>
 //==============================================================================
@@ -213,50 +214,19 @@ function refreshContactList()
 		select.remove(0);
 	}
 
-	//
-	//  Next, get the current contact list
-	//
-	var ws;
-	var url;
+	readContactList()
+					.then(( list) =>
+						{
+							let select = document.getElementById( 'memberList');
 
-	if ( window.location.protocol == 'https:')
-	{
-		url = 'wss://' + window.location.host + '/phonetree/getContacts';
-	}
-	else
-	{
-		url = 'ws://' + window.location.host + '/phonetree/getContacts';
-	}
-	ws = new WebSocket( url);
+							list.forEach( (row) =>
+								{
+									let option = new Option( row.firstname + " " + row.lastname, row.rowid);
+									select.add( option);
+								});
 
-	ws.onopen = (event) => 
-	{
-		ws.send('');
-	};
-
-	ws.onerror = (event) =>
-	{
-		ws.close();
-		ws = new WebSocket( url);
-		ws.onopen = (event) => 
-		{
-			ws.send('');
-		};
-	};
-
-	ws.onmessage = (msg) =>
-	{
-		let reply = JSON.parse( msg.data);
-		let select = document.getElementById( 'memberList');
-
-		reply.forEach( (row) =>
-			{
-				let option = new Option( row.firstname + " " + row.lastname, row.rowid);
-				select.add( option, undefined);
-			});
-
-		ws.close();
-	};
+							multiSelectWithoutCtrl('multiSel');
+						});
 }
 
 //==============================================================================

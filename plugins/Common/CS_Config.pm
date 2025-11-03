@@ -38,7 +38,15 @@ my $email_smtp;
 my $email_port;
 my $TwilioAccount;
 my $TwilioAuth;
-my $TwilioNumber;
+my $TwilioPhone;
+my $TwilioGender;
+my $TwilioIntro;
+my $phoneTreeEmailSender;
+my $TwilioAlways;
+my $logging;
+my $maxRetries;
+my $delayBetweenRetries;
+my $callerIDNumber;
 my $uid;
 my $pwd;
 our $ConfigName = ".churchsuite.cfg";
@@ -112,11 +120,6 @@ sub loadConfig()
 					$email_pwd = unhidden($1);
 					next;
 				}
-				if ( m/^EmailSender=(.*)/)
-				{
-					$emailSender=$1;
-					next;
-				}
 				if ( m/^TwilioAcct=(.*)/)
 				{
 					$TwilioAccount=$1;
@@ -129,7 +132,57 @@ sub loadConfig()
 				}
 				if ( m/^TwilioPhone=(.*)/)
 				{
-					$TwilioNumber=$1;
+					$TwilioPhone=$1;
+					next;
+				}
+
+				##  PhoneTree specific entries
+				if ( m/^PhoneTreeEmailSender=(.*)/)
+				{
+					$phoneTreeEmailSender=$1;
+					next;
+				}
+
+				if ( m/TwilioGender=(.*)/)
+				{
+					$TwilioGender=$1;
+					next;
+				}
+				if ( m/TwilioIntro=(.*)/)
+				{
+					$TwilioIntro=$1;
+					next;
+				}
+				if ( m/TwilioAlways=(.*)/)
+				{
+					$TwilioAlways=$1;
+					next;
+				}
+				if ( m/Logging=(.*)/)
+				{
+					$logging = $1;
+					next;
+				}
+				if ( m/MaxRetries=(.*)/)
+				{
+					$maxRetries = $1;
+					next;
+				}
+				if ( m/DelayBetweenRetries=(.*)/)
+				{
+					$delayBetweenRetries = $1;
+					next;
+				}
+				if (m/CallerIDNumber=(.*)/i)
+				{
+					$callerIDNumber = $1;
+					next;
+				}
+
+				## Scheduler specific entries
+				if ( m/^EmailSender=(.*)/)
+				{
+					$emailSender=$1;
 					next;
 				}
 				if ( m/^AdminName=(.*)/)
@@ -162,6 +215,8 @@ sub loadConfig()
 					$adminPassword = unhidden($1);
 					next;
 				}
+
+				#Directory specific entries
 				if ( m/^DirectoryAccessURL=(.*)/)
 				{
 					$directoryAccessURL = $1;
@@ -197,30 +252,8 @@ sub loadConfig()
 					$directoryEmailSender=$1;
 					next;
 				}
-				if ( m/^AdminName=(.*)/)
-				{
-					$adminName = $1;
-					next;
-				}
-				if ( m/^AdminEmail=(.*)/)
-				{
-					$adminEmail = $1;
-					next;
-				}
-				if ( m/^AdminPhone=(.*)/)
-				{
-					$adminPhone = $1;
-					next;
-				}
-				if ( m/^AdminText=(.*)/)
-				{
-					$adminTextNumber = $1;
-					next;
-				}
-				else
-				{
-					die "No match!\n";
-				}
+
+				die "No match found for $_!\n";
 			}
 			close CFG;
 		}
@@ -261,10 +294,6 @@ sub saveConfig(%)
 	{
 		$email_pwd = $config{"EmailPWD"};
 	}
-	if ( defined( $config{"EmailSender"}))
-	{
-		$emailSender = $config{"EmailSender"};
-	}
 	if ( defined( $config{"TwilioAcct"}))
 	{
 		$TwilioAccount = $config{"TwilioAcct"};
@@ -275,7 +304,47 @@ sub saveConfig(%)
 	}
 	if ( defined( $config{"TwilioPhone"}))
 	{
-		$TwilioNumber = $config{"TwilioPhone"};
+		$TwilioPhone = $config{"TwilioPhone"};
+	}
+
+	##	PhoneTree specific
+	if ( defined( $config{"TwilioGender"}))
+	{
+		$TwilioGender = $config{"TwilioGender"};
+	}
+	if ( defined( $config{"TwilioIntro"}))
+	{
+		$TwilioIntro = $config{"TwilioIntro"};
+	}
+	if ( defined( $config{"TwilioAlways"}))
+	{
+		$TwilioAlways = $config{"TwilioAlways"};
+	}
+	if ( defined( $config{"DirectoryEmailSender"}))
+	{
+		$directoryEmailSender = $config{"DirectoryEmailSender"};
+	}
+	if ( defined( $config{"Logging"}))
+	{
+		$logging  = $config{"Logging"};
+	}
+	if ( defined( $config{"MaxRetries"}))
+	{
+		$maxRetries  = $config{"MaxRetries"};
+	}
+	if ( defined( $config{"DelayBetweenRetries"}))
+	{
+		$delayBetweenRetries  = $config{"DelayBetweenRetries"};
+	}
+	if (defined( $config{"CallerIDNumber"}))
+	{
+		$callerIDNumber = $config{"CallerIDNumber"};
+	}
+
+	##	Scheduler specific
+	if ( defined( $config{"EmailSender"}))
+	{
+		$emailSender = $config{"EmailSender"};
 	}
 	if ( defined( $config{"AdminName"}))
 	{
@@ -301,6 +370,8 @@ sub saveConfig(%)
 	{
 		$adminPassword = $config{"AdminPWD"};
 	}
+
+	##	Directory specific
 	if ( defined( $config{"DirectoryAdminName"}))
 	{
 		$directoryAdminName = $config{"DirectoryAdminName"};
@@ -341,16 +412,30 @@ sub saveConfig(%)
 	print CFG "EmailPort=" . $email_port . "\n";
 	print CFG "EmailUID=" . $email_uid . "\n";
 	print CFG "EmailPWD=" . hidden( $email_pwd) . "\n";
-	print CFG "EmailSender=" . $emailSender . "\n";
 	print CFG "TwilioAcct=" . $TwilioAccount . "\n";
 	print CFG "TwilioAuth=" . hidden( $TwilioAuth) . "\n";
-	print CFG "TwilioPhone=" . $TwilioNumber . "\n";
+	print CFG "TwilioPhone=" . $TwilioPhone . "\n";
+
+	##	Phone Tree specific
+	print CFG "TwilioGender=" . $TwilioGender . "\n";
+	print CFG "TwilioIntro=" . $TwilioIntro . "\n";
+	print CFG "TwilioAlways=" . $TwilioAlways . "\n";
+	print CFG "PhoneTreeEmailSender=" . $phoneTreeEmailSender . "\n";
+	print CFG "Logging=" . $logging . "\n";
+	print CFG "MaxRetries=" . $maxRetries . "\n";
+	print CFG "DelayBetweenRetries=" . $delayBetweenRetries . "\n";
+	print CFG "CallerIDNumber=" . $callerIDNumber . "\n";
+
+	##	Scheduler specific
+	print CFG "EmailSender=" . $emailSender . "\n";
 	print CFG "AdminName=" . $adminName . "\n";
 	print CFG "AdminEmail=" . $adminEmail . "\n";
 	print CFG "AdminPhone=" . $adminPhone . "\n";
 	print CFG "AdminText=" . $adminTextNumber . "\n";
 	print CFG "AdminLogin=" . $adminLogin . "\n";
 	print CFG "AdminPWD=" . hidden( $adminPassword) . "\n";
+
+	##	Directory specific
 	print CFG "DirectoryAdminName=" . $directoryAdminName . "\n";
 	print CFG "DirectoryAdminEmail=" . $directoryAdminEmail . "\n";
 	print CFG "DirectoryAdminPhone=" . $directoryAdminPhone . "\n";
@@ -374,16 +459,30 @@ sub getConfigInfo()
 						'EmailPort' => $email_port, 
 						'EmailUID' => $email_uid, 
 						'EmailPWD' => $email_pwd , 
-						'EmailSender' => $emailSender, 
 						'TwilioAcct' => $TwilioAccount, 
 						'TwilioAuth' => $TwilioAuth , 
-						'TwilioPhone' => $TwilioNumber, 
+						'TwilioPhone' => $TwilioPhone, 
+
+						# Scheduler specific
+						'EmailSender' => $emailSender, 
 						'AdminName' => $adminName , 
 						'AdminEmail' => $adminEmail , 
 						'AdminPhone' => $adminPhone , 
 						'AdminText' => $adminTextNumber , 
 						'AdminLogin' => $adminLogin , 
 						'AdminPWD' => $adminPassword , 
+
+						# Phone Tree specific
+						'TwilioGender' => $TwilioGender,
+						'TwilioIntro' => $TwilioIntro,
+						'TwilioAlways' => $TwilioAlways,
+						'PhoneTreeEmailSender' => $phoneTreeEmailSender,
+						'Logging' => $logging,
+						'MaxRetries' => $maxRetries,
+						'DelayBetweenRetries' => $delayBetweenRetries,
+						'CallerIDNumber' => $callerIDNumber,
+
+						#  Directory specific
 						'DirectoryAdminName' => $directoryAdminName,
 						'DirectoryAdminEmail' => $directoryAdminEmail,
 						'DirectoryAdminPhone' => $directoryAdminPhone,

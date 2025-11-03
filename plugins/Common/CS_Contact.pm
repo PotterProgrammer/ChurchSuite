@@ -153,4 +153,68 @@ sub sendSMSTwilio($$)
 	return( $rc);
 }
 
+#------------------------------------------------------------------------------
+#  sub makeTwilioAutoCall( $phoneNumber, $message)
+#  		This function calls the indicated phone number and reads the message
+#  		provided.
+#------------------------------------------------------------------------------
+sub makeTwilioAutoCall($$)
+{
+ my ( $phoneNumber, $message) = @_;
+ my $rc = 0;
+ my %config = getConfigInfo();
+ my $gender = ($config{TwilioGender} =~ /m/i) ? 'man' : 'woman';
+ my $intro = $config{TwilioIntro};
+ my $tw = WWW::Twilio::TwiML->new();
+ my $twr = $tw->Response;
+ my $callingFrom = (defined( $config{callerIDNumber})) ? $config{callerIDNumber} : $config{TwilioPhone};
+
+ if ( defined( $intro) && length( $intro))
+	{
+	 $twr->Say( {voice => "$gender"},  $intro);
+	 $twr->Pause();
+ 	}
+
+ $twr->Say( {voice => "$gender"}, $message);
+ $twr->Pause();
+ $twr->Say( {voice => "$gender"}, "If you would like to hear this message again, please press 9 now.");
+ $twr->Gather( {numDigits => 1, timeout => 3, finishOnKey=>'#'});
+ $twr->Say( {voice => "$gender"}, "Good-bye...");
+
+ my $msg = uri_escape( $tw->to_string);
+ my $twilio = WWW::Twilio::API->new(AccountSid  => $config{TwilioAccount},
+									AuthToken   => $config{TwilioAuth},
+									API_VERSION => '2010-04-01' );
+
+ my $response = $twilio->POST(	'Calls',
+								To   => $phoneNumber,
+								From => $callingFrom,
+##-->  Changed by Twilio								IfMachine => 'Continue',
+								MachineDetection => 'DetectMessageEnd',
+								Url  => 'http://twimlets.com/echo?Twiml='.$msg
+##-->								Url  => 'http://twimlets.com/message?Message%5B0%5D='.$msg
+							 );
+
+ print "Response is: $response->{content}\n\n$response->{message}\n";
+ if ( $response->{code} != 201)
+ 	{
+	 logCall( "Call not placed!",  "Twilio said: " . $response->{code} . ':' .$response->{message}. "\n" . $response->{content});
+	 return 1;
+	}
+ $response->{content} =~ m/<Sid>(.*?)<\/Sid>.*<Status>(.*?)<\/Status>/i;
+ my ($sid, $status) = ($1, $2);
+
+ while( $status =~ /ringing|in-progress|queued/)
+	{
+	 $response = $twilio->GET( 'Calls', Sid=>$sid);
+	 $response->{content} =~ m/<Status>(.*?)<\/Status>/i;
+	 $status = $1;
+##-->	 print "STATUS=$status\n";
+	 sleep 1;
+   }
+
+ $rc = ( $status !~ m/completed/i);
+ return( $rc);
+}
+
 1;
