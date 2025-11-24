@@ -105,33 +105,39 @@ sub saveDirectoryMembers($)
 		           	 loginId,
 			         firstName,
 					 lastName,
+					 children,
 					 address,
 					 city,
 					 zip,
 				     email,
+				     email2,
 					 phone,
 				     cell,
+				     cell2,
 					 photo,
 					 UID,
 					 password,
 					 admin
-		) values (?,?,?,?,?,?,?,?,?,?,?, ?, ?)");
+		) values (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)");
 
 	foreach  my $loginId ( keys( %{$memberList}))
 	{
 		$sth->bind_param( 1, $loginId);
 		$sth->bind_param( 2, $memberList->{$loginId}->{firstName});
 		$sth->bind_param( 3, $memberList->{$loginId}->{lastName});
-		$sth->bind_param( 4, $memberList->{$loginId}->{address});
-		$sth->bind_param( 5, $memberList->{$loginId}->{city});
-		$sth->bind_param( 6, $memberList->{$loginId}->{zip});
-		$sth->bind_param( 7, $memberList->{$loginId}->{email});
-		$sth->bind_param( 8, $memberList->{$loginId}->{phone});
-		$sth->bind_param( 9, $memberList->{$loginId}->{cell});
-		$sth->bind_param( 10, $memberList->{$loginId}->{photo});
-		$sth->bind_param( 11, $memberList->{$loginId}->{UID});
-		$sth->bind_param( 12, $memberList->{$loginId}->{password});
-		$sth->bind_param( 13, $memberList->{$loginId}->{admin});
+		$sth->bind_param( 4, $memberList->{$loginId}->{children});
+		$sth->bind_param( 5, $memberList->{$loginId}->{address});
+		$sth->bind_param( 6, $memberList->{$loginId}->{city});
+		$sth->bind_param( 7, $memberList->{$loginId}->{zip});
+		$sth->bind_param( 8, $memberList->{$loginId}->{email});
+		$sth->bind_param( 9, $memberList->{$loginId}->{email2});
+		$sth->bind_param( 10, $memberList->{$loginId}->{phone});
+		$sth->bind_param( 11, $memberList->{$loginId}->{cell});
+		$sth->bind_param( 12, $memberList->{$loginId}->{cell2});
+		$sth->bind_param( 13, $memberList->{$loginId}->{photo});
+		$sth->bind_param( 14, $memberList->{$loginId}->{UID});
+		$sth->bind_param( 15, $memberList->{$loginId}->{password});
+		$sth->bind_param( 16, $memberList->{$loginId}->{admin});
 
 		$sth->execute();
 	}
@@ -154,31 +160,37 @@ sub writeMemberInfo($)
 		           	 loginId,
 			         firstName,
 					 lastName,
+					 children,
 					 address,
 					 city,
 					 zip,
 				     email,
+				     email2,
 					 phone,
 				     cell,
+				     cell2,
 					 photo,
 					 UID,
 					 password,
 					 admin
-		) values (?,?,?,?,?,?,?,?,?,?,?,?,?)");
+		) values (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)");
 
 	$sth->bind_param( 1, $memberInfo->{loginId});
 	$sth->bind_param( 2, $memberInfo->{firstName});
 	$sth->bind_param( 3, $memberInfo->{lastName});
-	$sth->bind_param( 4, $memberInfo->{address});
-	$sth->bind_param( 5, $memberInfo->{city});
-	$sth->bind_param( 6, $memberInfo->{zip});
-	$sth->bind_param( 7, $memberInfo->{email});
-	$sth->bind_param( 8, $memberInfo->{phone});
-	$sth->bind_param( 9, $memberInfo->{cell});
-	$sth->bind_param( 10, $memberInfo->{photo});
-	$sth->bind_param( 11, $memberInfo->{UID});
-	$sth->bind_param( 12, $memberInfo->{password});
-	$sth->bind_param( 13, $memberInfo->{admin});
+	$sth->bind_param( 4, $memberInfo->{children});
+	$sth->bind_param( 5, $memberInfo->{address});
+	$sth->bind_param( 6, $memberInfo->{city});
+	$sth->bind_param( 7, $memberInfo->{zip});
+	$sth->bind_param( 8, $memberInfo->{email});
+	$sth->bind_param( 9, $memberInfo->{email2});
+	$sth->bind_param( 10, $memberInfo->{phone});
+	$sth->bind_param( 11, $memberInfo->{cell});
+	$sth->bind_param( 12, $memberInfo->{cell2});
+	$sth->bind_param( 13, $memberInfo->{photo});
+	$sth->bind_param( 14, $memberInfo->{UID});
+	$sth->bind_param( 15, $memberInfo->{password});
+	$sth->bind_param( 16, $memberInfo->{admin});
 
 	$sth->execute();
 

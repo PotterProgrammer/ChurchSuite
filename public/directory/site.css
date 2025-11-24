@@ -80,19 +80,31 @@ select:disabled,option:checked
 	width: 25em;
 }
 
-#buttonRow
+.buttonRow
 {
 	padding-top:  3vh;
 	margin-left: auto;
 	margin-right: auto;
+	display: flex;
+	justify-content: space-evenly;
+}
+
+.twoButtons 
+{
 	width: 23em;
 }
 
-#buttonRow input
+
+.buttonRow.twoButtons input
 {
-	margin-left:2em;
-	margin-right: 2em;
-	width: 8em;
+	padding-left: 2em;
+	padding-right: 2em;
+}
+
+.buttonRow button
+{
+	padding-left: 1em;
+	padding-right: 1em;
 }
 
 #submitbtn
@@ -260,7 +272,6 @@ nav ul li a:hover
 .rightEdge
 {
 	left: calc( 99.25vw - 14.65em);
-;;-->	margin-top: 3px;
 	width: 15em;
 }
 
@@ -343,6 +354,12 @@ fullName
 	color: #0000c0;
 	font-weight: 800;
 }
+
+children
+{
+	color: #0000c0;
+}
+
 street
 {
 	display:block;
@@ -424,10 +441,14 @@ namesList + #dataEntry
 	margin-left: 5%;
 }
 
-namesList + #dataEntry photo
+#myDataEntry
 {
-	margin-right: 28%;
+    display: flex;
+	justify-content:center;
+    top: 0px;
+	font-size: 13pt;
 }
+
 
 photo
 {
@@ -436,8 +457,7 @@ photo
     background-color: #d0d0d0;
     width:  191px;
     height: 241px;
-    margin-left: auto;
-	margin-top: 1em;
+	margin-top: 0;
     border: 3px solid black;
 }
 
@@ -445,6 +465,12 @@ photo img
 {
     width: 100%;
     max-height: 100%;
+}
+
+.photoSpace
+{
+	display: flex;
+	justify-content: center;
 }
 
 button
@@ -462,6 +488,7 @@ fauxbutton
     padding-right: .5em;
     border-radius: 5px;
     box-shadow: 5px 5px 3px rgba(0,0,0,.5);
+	width: 145px;
 }
 
 .editPhotoChoice
@@ -475,30 +502,23 @@ fauxbutton
 #pickPhoto
 {
     top: auto;
-    left: 37%;
-}
-
-namesList + #dataEntry #pickPhoto
-{
-	left: 29%;
+    left: calc( 50% - 72px - .5em);
+	text-align: center;
 }
 
 #deletePhoto
 {
     top: 180px;
-    left: 40%;
+    left: calc( 50% - 72px - .5em);
+	text-align: center;
 }
 
-namesList + #dataEntry #deletePhoto
-{
-	left: 31%;
-}
 
 div#formInfo
 {
     display:grid;
-    grid-template-columns: max-content max-content;
-    grid-gap: 5px;
+    grid-template-columns: max-content max-content max-content max-content;
+    grid-gap: 7px;
 }
 .infoLabel
 {

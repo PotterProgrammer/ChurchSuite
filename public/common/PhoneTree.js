@@ -152,9 +152,9 @@ function readContactList()
 
 //==============================================================================
 //  function readGroupMemberList( groupName)
-//		This asyncrhonous function returns a Promise.  On completion, the result
+//		This asynchronous function returns a Promise.  On completion, the result
 //		is an array of members of the named group.
-//			( {members: <memberName>, isGroup: [0|1]}
+//			( {memberName: <memberName>, id: <idNumber>, isGroup: [0|1]}
 //==============================================================================
 function readGroupMemberList( groupName)
 {
@@ -198,11 +198,13 @@ function readGroupMemberList( groupName)
 }
 
 //==============================================================================
-//  function redrawGroupList( id, callback)
+//  function redrawGroupList( id, redrawFinished, changedCallback)
 //  	This function redraws the list of group names in the indicated element.
-//  	When the list is rebuilt, the callback (if provided) is called.
+//  	If changedCallback is provided, an event listener is set on each option
+//  	to call that function on change for the option. When the list is
+//  	rebuilt, the redrawFinished callback is called (if provided).
 //==============================================================================
-function redrawGroupList( id, callback)
+function redrawGroupList( id, redrawFinished, changedCallback )
 {
 	let datalist = document.getElementById( id);
  
@@ -227,11 +229,15 @@ function redrawGroupList( id, callback)
 						let option = new Option( row[0], row[0]);
 						option.className = "multiSel";
 						option.setAttribute( "type", "group");
+						if ( changedCallback !== undefined)
+						{
+							option.addEventListener( 'click', () => {changedCallback( option)});
+						}
 						datalist.appendChild( option);
 					});
-				if ( callback !== undefined)
+				if ( redrawFinished !== undefined)
 				{
-					callback();
+					redrawFinished();
 				}
 
 			});

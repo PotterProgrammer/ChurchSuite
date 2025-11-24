@@ -49,7 +49,7 @@ function saveGroup()
 	{
 		if( option.selected)
 		{
-			members.push({ name: option.value, isGroup: (option.getAttribute("type") == "group")});
+			members.push({ name: option.text, id: option.value, isGroup: (option.getAttribute("type") == "group")});
 		}
 	}
 	const fetchOptions = {
@@ -185,9 +185,10 @@ function setGroupMembers()
 
 				list.forEach( (row) =>
 					{
-						let name=row.members;
+						let name = row.memberName;
+						let id = row.id;
 						let isGroup = (row.isGroup != 1) ? 'member' : 'group';
-						let options = document.querySelectorAll( `[value="${name}"][type="${isGroup}"]`);
+						let options = document.querySelectorAll( `[value="${id}"][type="${isGroup}"]`);
 						for( let option of options)
 						{
 							option.selected = true;
@@ -240,7 +241,7 @@ function refreshGroupMemberList()
 
 							list.forEach( (row) =>
 								{
-									let option = new Option( row.firstname + " " + row.lastname, `${row.firstname} ${row.lastname}`);
+									let option = new Option( row.firstname + " " + row.lastname, row.rowid);
 									option.className = "multiSel";
 									option.setAttribute( "type", "member");
 									select.add( option);

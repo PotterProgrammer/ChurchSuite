@@ -234,6 +234,7 @@ use Mojolicious::Lite;
 	{
 		my $self = shift;
 		my $list = readContacts();
+		print "Sending:\n\t" . Dumper( $list)."\n";
 		$self->send( {json => $list});
 	};
 

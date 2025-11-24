@@ -47,7 +47,8 @@ sub initDB()
 	$dbh->do( 'CREATE TABLE if not exists Groups
 					(
 						name text,
-						members text,
+						memberName text,
+						memberId integer,
 						isGroup integer not null default 0
 					)'
 			);
@@ -201,7 +202,7 @@ sub	getGroupMembers($)
 
 	print "Looking for members of $groupName\n";
 
-	my $groupList = $dbh->selectall_arrayref( "select members, isGroup from Groups where name=?", {Slice =>{}}, $groupName);
+	my $groupList = $dbh->selectall_arrayref( "select memberName, id, isGroup from Groups where name=?", {Slice =>{}}, $groupName);
 
 	closeDB();
 	return $groupList;
@@ -231,16 +232,18 @@ sub saveGroup($$)
 	##
 	$dbh->do( "delete from groups where name=?", undef, $groupName);
 
-	my $sth = $dbh->prepare( "insert into Groups ( name, members, isGroup) values (?,?,?)");
+	my $sth = $dbh->prepare( "insert into Groups ( name, membername, id, isGroup) values (?,?,?,?)");
 
 	foreach my $member ( @{$memberNameList})
 	{
 		my $memberName = $member->{name};
+		my $id = $member->{id};
 		my $isGroup = $member->{isGroup};
 
 		$sth->bind_param( 1, $groupName);
 		$sth->bind_param( 2, $memberName);
-		$sth->bind_param( 3, $isGroup);
+		$sth->bind_param( 3, $id);
+		$sth->bind_param( 4, $isGroup);
 		$sth->execute();
 		if( $sth->err)
 		{

@@ -290,13 +290,16 @@ function getFormInfo()
   </uploadform>
   
   <div id="page">
-    <div id="dataEntry">
+    <div id="myDataEntry">
     <form id="memberInfoForm" action="/addNewMember" method="post">
-      <photo>
-          <img id="memberPhoto" src="<%= (defined( $memberInfo->{photo}) && length( $memberInfo->{photo}))? $memberInfo->{photo} : 'uploadPhoto.png' %>" onclick="editPhoto()">
-          <fauxbutton class="editPhotoChoice" id="pickPhoto"><label id="poke" for="imageFile">Choose new photo</label></fauxbutton>
-          <fauxbutton class="editPhotoChoice" id="deletePhoto" onclick="resetPhoto();">Delete this photo</fauxbutton>
-      </photo>
+	  <div class="photoSpace">
+        <photo>
+            <img id="memberPhoto" src="<%= (defined( $memberInfo->{photo}) && length( $memberInfo->{photo}))? $memberInfo->{photo} : 'uploadPhoto.png' %>" onclick="editPhoto()">
+            <fauxbutton class="editPhotoChoice" id="pickPhoto"><label id="poke" for="imageFile">Choose new photo</label></fauxbutton>
+            <fauxbutton class="editPhotoChoice" id="deletePhoto" onclick="resetPhoto();">Delete this photo</fauxbutton>
+        </photo>
+	  </div>
+	  
       <br>
       <div id="formInfo">
           <label class="infoLabel"  for="firstName">First Name:</label>
@@ -305,31 +308,47 @@ function getFormInfo()
           <label class="infoLabel"  for="lastName">Last Name:</label>
           <input type="text" id="lastName" name="lastName" required value="<%= $memberInfo->{lastName} %>"></input>
         
+          <label class="infoLabel"  for="children">Children:</label>
+          <input type="text" id="address" name="address" value="<%= $memberInfo->{address} %>"></input>
+          <span></span><span></span>
+
           <label class="infoLabel"  for="address">Address:</label>
           <input type="text" id="address" name="address" value="<%= $memberInfo->{address} %>"></input>
+          <span></span><span></span>
           
           <label class="infoLabel"  for="city">City:</label>
           <input type="text" id="city" name="city" value="<%= $memberInfo->{city} %>"></input>
+          <span></span><span></span>
           
           <label class="infoLabel"  for="zip">Zip:</label>
           <input type="text" id="zip" name="zip" value="<%= $memberInfo->{zip} %>"></input>
+          <span></span><span></span>
           
           <label class="infoLabel"  for="phone">Phone number:</label>
           <input type="tel" id="phone" name="phone" value="<%= $memberInfo->{phone} %>" pattern="[0-9]{3}-[0-9]{3}-[0-9]{4}"></input>
+          <span></span><span></span>
           
           <label class="infoLabel"  for="cell">Cell number:</label>
           <input type="tel" id="cell" name="cell" value="<%= $memberInfo->{cell} %>" pattern="[0-9]{3}-[0-9]{3}-[0-9]{4}"></input>
           
+          <label class="infoLabel"  for="cell2">Cell number:</label>
+          <input type="tel" id="cell2" name="cell2" value="<%= $memberInfo->{cell2} %>" pattern="[0-9]{3}-[0-9]{3}-[0-9]{4}"></input>
+          
           <label class="infoLabel"  for="email">Email address:</label>
           <input type="email" id="email" name="email" value="<%= $memberInfo->{email} %>"></input>
+          
+          <label class="infoLabel"  for="email2">Email address:</label>
+          <input type="email2" id="email2" name="email2" value="<%= $memberInfo->{email2} %>"></input>
        </div>
     </form>
         <br>
+    </div>
+    <div class="buttonRow twoButtons">
         <div>
             <button class="editMemberButton" onClick="updateMember()">Update My Entry</button>
             <button class="editMemberButton" onClick="removeMember()">Remove My Entry</button>
         </div>
-    </div>
+	</div>
   </div>
 </body>
 </html>

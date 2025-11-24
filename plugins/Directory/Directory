@@ -69,6 +69,16 @@ print "Got login request for $username/$password\n";
 			}
 			else
 			{
+				print "memberInfo=" . Dumper( $memberInfo) . "\n";
+				if ( ! defined($memberInfo->{password}))
+				{
+					print "Redirecting...\n";
+					$self->stash( loginId => $memberInfo->{loginId});
+					$self->session('user' => $memberInfo->{loginId});
+					$self->session( 'UID' => $memberInfo->{UID});
+					$self->render( 'setPassword');
+					return;
+				}
 				print "Rendering \/\n";
 				$self->redirect_to( '/');
 			}
@@ -427,7 +437,14 @@ print "Got password reset request for " .$self->session('user') . "\n";
 
 					if ( !defined( $json->{formatted}) || $json->{formatted})
 					{
-						my $html = '<img id="copyIcon" src="/directory/copy.png" onclick="copyInfo()" title="Copy"><div class="infoBox"><fullName>' . $members->{$name}->{firstName} . ' ' . $members->{$name}->{lastName} . "</fullName>\n";
+						my $html = '<img id="copyIcon" src="/directory/copy.png" onclick="copyInfo()" title="Copy"><div class="infoBox"><fullName>' . 
+								    $members->{$name}->{firstName} . ' ' . $members->{$name}->{lastName} . "</fullName>\n";
+
+						if ( defined( $members->{$name}->{children}) && length( $members->{$name}->{children}))
+						{
+							$html .= 'Children: <children>' . $members->{$name}->{children} . '</children><br><br>';
+						}
+
 						if ( defined( $members->{$name}->{address}) && length( $members->{$name}->{address}))
 						{
 							$html .= '<street>' . $members->{$name}->{address} . "</street>\n";
@@ -458,12 +475,19 @@ print "Got password reset request for " .$self->session('user') . "\n";
 							{
 								$html .= '<cell>cell:</cell> <phoneNumber><a href="tel:' .$members->{$name}->{cell}.'">' . $members->{$name}->{cell} . "</a></phoneNumber>\n";
 							}
+							if ( defined( $members->{$name}->{cell2}) && length( $members->{$name}->{cell2}))
+							{
+								$html .= '<cell>cell:</cell> <phoneNumber><a href="tel:' .$members->{$name}->{cell2}.'">' . $members->{$name}->{cell2} . "</a></phoneNumber>\n";
+							}
 							$html .= "</phoneBlock>\n";
 						}
 						if ( defined( $members->{$name}->{email}) && length( $members->{$name}->{email}))
 						{
 							$html .= '<email><a href="mailto:' .$members->{$name}->{email}.'">'.  $members->{$name}->{email} . "</a></email>\n";
-##-->							print "added $html\n";
+						}
+						if ( defined( $members->{$name}->{email2}) && length( $members->{$name}->{email2}))
+						{
+							$html .= '<email><a href="mailto:' .$members->{$name}->{email2}.'">'.  $members->{$name}->{email2} . "</a></email>\n";
 						}
 						$html .= '<br></div>';
 
@@ -907,7 +931,7 @@ print "Got password reset request for " .$self->session('user') . "\n";
 					print "Got a '$message' request\n";
 					if ( $message =~ m/Backup/)
 					{
-						my $backupFilename = BackupRestore::backupData();
+						my $backupFilename = backupData();
 						$ws->send( $backupFilename);
 					}
 					else

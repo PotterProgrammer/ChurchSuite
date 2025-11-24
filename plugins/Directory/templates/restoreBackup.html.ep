@@ -19,7 +19,7 @@
 		<p>Note that this will erase <b><u>all</u></b> currently entered information, replacing it with the contents of the backup file!</p>
 		<p>Are you sure you wish to continue?</p>
 		<br>
-		<div id="buttonRow">
+		<div class ="buttonRow twoButtons">
 			<input type="submit" name="submit" id="submitbtn" class="submitbtn" value="Yes" onclick="document.getElementById('filename').click();">
 			<input type="submit" formnovalidate name="submit" id="resetbtn" class="resetbtn" value="No" onclick="window.location='/directory/admin'">
 		</div>

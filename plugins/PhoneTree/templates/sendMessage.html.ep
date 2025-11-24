@@ -11,12 +11,14 @@
 
 <script>
 
+let contactList = new Map();
+
 //==============================================================================
 //  function refreshGroupList()
 //==============================================================================
 function refreshGroupList()
 {
-	redrawGroupList( "groups", () => {multiSelectWithoutCtrl( 'multiSel');});
+	redrawGroupList( "groups", () => {multiSelectWithoutCtrl( 'multiSel')}, groupSelected);
 }
 
 //==============================================================================
@@ -45,12 +47,151 @@ function refreshContactsList()
 						let option = new Option( row.firstname + " " + row.lastname, row.rowid);
 						option.className = "multiSel";
 						option.setAttribute( "type", "member");
+						option.addEventListener( 'click', () => {clickedContact( option)});
 						select.add( option);
 					});
 
 				multiSelectWithoutCtrl('multiSel');
 			});
+}
 
+//==============================================================================
+//  function clickedContact( item)
+//		This function is called whenever a contact is clicked.  It either sets
+//		the entry in contactList to 1 (if it is not currently set) or removes
+//		it from the list.
+//==============================================================================
+function clickedContact( item)
+{
+	if ( contactList.has( Number(item.value)))
+	{
+		contactList.delete( item.value);
+	}
+	else
+	{
+		contactList.set( Number(item.value), 1);
+	}
+}
+
+//==============================================================================
+//  function clearContacts()
+//		This function clears the checkboxes in all entries in the contact list,
+//		and clears all entries in the groups list.
+//==============================================================================
+function clearContacts()
+{
+	unSelectAllItems( 'individuals');
+	unSelectAllItems( 'groups');
+	contactList.clear();
+}
+
+//==============================================================================
+//  function selectAllContacts()
+//		This function sets the checkboxes in all entries in the contact list,
+//		and clears all entries in the groups list.
+//==============================================================================
+function selectAllContacts()
+{
+	unSelectAllItems( 'groups');
+	let list = document.getElementById( 'individuals');
+	for( let option of list.options)
+	{
+		option.selected = true;
+		contactList.set( Number(option.value), 1);
+	}
+}
+
+//==============================================================================
+//  function groupSelected( item)
+//		This function is called whenever a group is selected (checked or unchecked).
+//==============================================================================
+function groupSelected( item)
+{
+	//
+	//  Get a list of members in this group
+	//
+	if ( item.selected)
+	{
+		//
+		//  Select each name in the list (and increment
+		//  occurrence count in the memberList)
+		//
+		updateContactList( item.value, 1);
+	}
+	else
+	{
+		//
+		//  Unselect each name in the list (and increment
+		//  occurrence count in the memberList)
+		//
+		updateContactList( item.value, -1);
+	}
+}
+
+//==============================================================================
+//  function updateContactList( groupName, adjustByAmount)
+//		This function is called whenever a group is selected or unselected.  It
+//		returns a Promise.  It retrieves the members of the group (which may
+//		include other groups) and then iterates through the list.  It adjusts
+//		the value for the member in the contactList by the adjustByAmount.  If
+//		the value is positive, it selects the corresponding entry in the list
+//		of individuals.  If the value is zero, then the corresponding name is
+//		unselected and the entry is removed from the contactList map.
+//==============================================================================
+function updateContactList( groupName, adjustByAmount)
+{
+	return new Promise((resolve, reject) =>
+		{
+			readGroupMemberList( groupName)
+				.then( (list) =>
+					{
+						let select = document.getElementById( 'groupMembers');
+
+						list.forEach( (row) =>
+							{
+								let name = row.memberName;
+								let id = row.id;
+								let isGroup = (row.isGroup == 1);
+								
+								//
+								//  Is this member a group?
+								//
+								if ( !isGroup)
+								{
+									if ( contactList.has( id))
+									{
+										contactList.set( id, contactList.get(id) + adjustByAmount);
+
+										if ( contactList.get( id) <= 0)
+										{
+											contactList.delete( id);
+										}
+										document.querySelector( `.individuals option[value="${id}"]`).selected = contactList.has( id);
+									}
+									else
+									{
+										if ( adjustByAmount > 0)
+										{
+											contactList.set( id, 1);
+											document.querySelector( `.individuals option[value="${id}"]`).selected = true;
+										}
+									}
+
+								}
+								else
+								{
+									//
+									//  If this member is itself a group, process those member names as well...
+									//
+									updateContactList( name, adjustByAmount);
+								}
+							});
+
+					});
+		
+				resolve();
+			}
+		);
 }
 
 //
@@ -89,10 +230,10 @@ window.addEventListener( "load", function ()
 				<option value="Trustees" class="multiSel" type="group">Trustees</option>
 			</select>
 			<p/>
-			<div>
+			<!-- div>
 				<button onClick="selectAllItems( 'groups')">Select All</button>
 				<button onClick="unSelectAllItems( 'groups')">Select None</button>
-			</div>
+			</div -->
 		</div>
 	</div>
 	<div class="indivCol showCheckBoxes">
@@ -108,8 +249,8 @@ window.addEventListener( "load", function ()
 			</select>
 			<p/>
 			<div>
-				<button onClick="selectAllItems( 'individuals')">Select All</button>
-				<button onClick="unSelectAllItems( 'individuals')">Select None</button>
+				<button onClick="selectAllContacts()">Select All</button>
+				<button onClick="clearContacts()">Select None</button>
 			</div>
 		</div>
 	</div>

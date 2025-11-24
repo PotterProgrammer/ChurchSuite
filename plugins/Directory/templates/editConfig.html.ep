@@ -43,7 +43,7 @@
 
 			</table>
 
-			<div id="buttonRow">
+			<div class="buttonRow twoButtons">
 				<input type="submit" name="submit" id="submitbtn" class="submitbtn" value="Save">
 				<input type="submit" formnovalidate name="submit" id="resetbtn" class="resetbtn" value="Cancel">
 			</div>
