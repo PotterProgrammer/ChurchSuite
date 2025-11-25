@@ -1,11 +1,11 @@
 ##
-##  Module to send messages to volunteers/organizers
+##  Module to send messages to directory members
 ##
 package Directory::Messaging;
 
 require Exporter;
 @ISA = qw( Exporter);
-@EXPORT = qw( sendEmailToMember sendPasswordResetAlert);
+@EXPORT = qw( sendNoticeToMember sendPasswordResetAlert);
 
 use warnings;
 use strict;
@@ -38,27 +38,31 @@ my $uid;
 my $pwd;
 
 #------------------------------------------------------------------------------
-#  sub sendEmailToMember( $memberRef, $emailType)
-#  		This function sends an email to a member to let them know
+#  sub sendNoticeToMember( $memberRef, $msgType)
+#  		This function sends an email or SMS to a member to let them know
 #  		how to access the system and set their password.  The argument received
-#  		is a reference to a hash containing the user info.  If $emailType='New',
+#  		is a reference to a hash containing the user info.  If $msgType='New',
 #  		then a "new member" message is sent.  If it is 'Reset', a "your password
 #  		has been reset" message is sent
 #------------------------------------------------------------------------------
-sub sendEmailToMember($$)
+sub sendNoticeToMember($$)
 {
 	$SIG{CHLD} = "IGNORE";
 	my $pid = fork();
-	my %emailTypes = ( New => {email => "email/directory/newMember.htm", message => "Welcome to the new online directory!"},
-					   Reset => {email => "email/directory/resetPassword.htm", message => "Your online directory password has been reset."});
+	my %msgTypes = ( New   => {	email => "email/directory/newMember.htm", message => "Welcome to the new online directory!",
+								sms => "sms/directory/newMember.txt", message => "Welcome to the new online directory!"
+							  },
+					 Reset => {	email => "email/directory/resetPassword.htm", message => "Your online directory password has been reset.",
+				     			sms => "sms/directory/resetPassword.txt", message => "Your online directory password has been reset."
+							  });
 
 	die "Fork failed!!\n" if (! defined( $pid));
 
 	if ( !$pid)
 	{
-		my ($member, $emailType) = @_;
-		my $emailTemplate;
-		my $textTemplate;
+		my ($member, $msgType) = @_;
+		my $email;
+		my $sms;
 
 		my %config = getConfigInfo();
 
@@ -78,44 +82,87 @@ sub sendEmailToMember($$)
 		##
 		##  Read in the templates
 		##
-		if ( defined( $emailTypes{$emailType}))
+		if ( defined( $msgTypes{$msgType}))
 		{
-			open( my $TEMPLATE, '<', $emailTypes{$emailType}{email}) || die "Couldn't read email template!\n";
-			read( $TEMPLATE, $emailTemplate, 999999);
+			open( my $TEMPLATE, '<', $msgTypes{$msgType}{email}) || die "Couldn't read email template \"$msgTypes{$msgType}{email}\"!\n";
+			read( $TEMPLATE, $email, 999999);
+			close $TEMPLATE;
+			open( $TEMPLATE, '<', $msgTypes{$msgType}{sms}) || die "Couldn't read SMS template \"$msgTypes{$msgType}{sms}\"!\n";
+			read( $TEMPLATE, $sms, 999999);
 			close $TEMPLATE;
 		}
 		else
 		{
-			print STDERR "Unrecognized mail type $emailType!\n";
+			print STDERR "Unrecognized mail type $msgType!\n";
 			return;
 		}
 		
+		foreach  my $msg ($email, $sms)
+		{
+			$msg =~ s/__FIRST_NAME__/$firstName/smg;
+			$msg =~ s/__NAME__/$name/smg;
+			$msg =~ s/__LOGIN_ID__/$member->{loginId}/smg;
+			$msg =~ s/__ACTIVATE_URL__/$activateURL/smg;
+			$msg =~ s/__ACCESS_URL__/$accessURL/smg;
+			$msg =~ s/__DIRECTORY_ADMIN__/$config{DirectoryAdminName}/smg;
+			$msg =~ s/__DIRECTORY_ADMIN_EMAIL__/$config{DirectoryAdminEmail}/smg;
+			$msg =~ s/__DIRECTORY_ADMIN_PHONE__/$config{DirectoryAdminPhone}/smg;
+			$msg =~ s/__DIRECTORY_ADMIN_DIALABLE_PHONE__/$dialableAdminPhone/smg;
+			$msg =~ s/__DIRECTORY_ADMIN_TEXT_NUMBER__/$config{DirectoryAdminText}/smg;
+			$msg =~ s/__DIRECTORY_ADMIN_TEXTABLE_NUMBER__/$textableAdminNumber/smg;
+		}
+
 		if ( defined( $member->{email}) && ( $member->{email} =~ /@/))
 		{
-			my $email  = $emailTemplate;
-
-			$email =~ s/__FIRST_NAME__/$firstName/smg;
-			$email =~ s/__NAME__/$name/smg;
-			$email =~ s/__LOGIN_ID__/$member->{loginId}/smg;
-			$email =~ s/__ACTIVATE_URL__/$activateURL/smg;
-			$email =~ s/__ACCESS_URL__/$accessURL/smg;
-			$email =~ s/__DIRECTORY_ADMIN__/$config{DirectoryAdminName}/smg;
-			$email =~ s/__DIRECTORY_ADMIN_EMAIL__/$config{DirectoryAdminEmail}/smg;
-			$email =~ s/__DIRECTORY_ADMIN_PHONE__/$config{DirectoryAdminPhone}/smg;
-			$email =~ s/__DIRECTORY_ADMIN_DIALABLE_PHONE__/$dialableAdminPhone/smg;
-			$email =~ s/__DIRECTORY_ADMIN_TEXT_NUMBER__/$config{DirectoryAdminText}/smg;
-			$email =~ s/__DIRECTORY_ADMIN_TEXTABLE_NUMBER__/$textableAdminNumber/smg;
+			##
+			##  Send the email
+			##
+			print "Emailing $name a \"$msgTypes{$msgType}{message}\" message...\n";
+			sendEmail( $member->{email}, $config{DirectoryEmailSender}, $msgTypes{$msgType}{message}, $email, 'email/directory/directoryLogo.png');
+			print "Sent\n";
+		}
+		elsif ( defined( $member->{cell}) && ( $member->{cell} =~ m/^[0-9-\(\) ]+$/))
+		{
+			##
+			##  Send a text
+			##
+			my $phone = $member->{cell};
+			$phone =~ s/[\(\) -]//g;
 
 			##
-			##  Send the reminder email
+			##  Send the reminder text
 			##
-			print "Emailing $name a \"$emailTypes{$emailType}{message}\" message...\n";
-			sendEmail( $member->{email}, $config{DirectoryEmailSender}, $emailTypes{$emailType}{message}, $email, 'email/directory/directoryLogo.png');
+			print "Sending a \"$msgTypes{$msgType}{message}\" text to $phone\n";
+			sendSMSTwilio( $phone, $sms);
+##-->			while( $sms =~ m/(.{1,155})/smg)
+##-->			{
+##-->				sendSMSTwilio( $phone, $1);
+##-->			}
 			print "Sent\n";
 		}
 		else
 		{
-			print STDERR "No email address for $name!\n";
+			##
+			##  No active contact info for $name.  Send email
+			##  to admin with login info for $name.  
+			##
+			print STDERR "No email address or phone for $name!\n";
+
+			##
+			##  Add notification at the top of the email,
+			##  explaining that this is being sent to the admin
+			##  because there was no email or cell phone
+			##  provided for $name, and that the admin will
+			##  need to provide this information to $name.
+			##
+			$email =~ s/<body>/<body>\n$config{DirectoryAdminName}, please note: <b>$name<\/b> does not have an email or cell phone number entered in the directory, so the following message could not be sent automatically.<p>Please provide the following information to $name so that $name can access the directory.<\/p><hr>\n/;
+
+			##
+			##  Send the email
+			##
+			print "Emailing $config{DirectoryAdminName} a \"$msgTypes{$msgType}{message}\" message for $name...\n";
+			sendEmail( $config{DirectoryAdminEmail}, $config{DirectoryEmailSender}, "An online directory update for $name was made.", $email, 'email/directory/directoryLogo.png');
+			print "Sent\n";
 		}
 
 		exit;
@@ -125,5 +172,6 @@ sub sendEmailToMember($$)
 		print "Spawned $pid\n";
 	}
 }
+
 
 1;

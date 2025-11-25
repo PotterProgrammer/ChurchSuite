@@ -33,6 +33,9 @@ my $membersFileBackup = './members.json.backup';
 	get '/login' => sub
 	{
 		my $self = shift( @_);
+		my %config = getConfigInfo();
+
+		$self->stash( admin => $config{DirectoryAdminName});
 
 		$self->render( '/login');
 	};
@@ -72,11 +75,14 @@ print "Got login request for $username/$password\n";
 				print "memberInfo=" . Dumper( $memberInfo) . "\n";
 				if ( ! defined($memberInfo->{password}))
 				{
-					print "Redirecting...\n";
-					$self->stash( loginId => $memberInfo->{loginId});
-					$self->session('user' => $memberInfo->{loginId});
-					$self->session( 'UID' => $memberInfo->{UID});
-					$self->render( 'setPassword');
+##-->					print "Redirecting...\n";
+##-->					$self->stash( loginId => $memberInfo->{loginId});
+##-->					$self->session('user' => $memberInfo->{loginId});
+##-->					$self->session( 'UID' => $memberInfo->{UID});
+##-->					$self->render( 'setPassword');
+##-->					return;
+					$self->flash( error=> 'Invalid login name or password!');
+					$self->redirect_to( '/login');
 					return;
 				}
 				print "Rendering \/\n";
@@ -627,7 +633,7 @@ print "Got password reset request for " .$self->session('user') . "\n";
 
 				if ( !defined( $pwd) || !length( $pwd))
 				{
-					sendEmailToMember( $members->{$loginId}, "New");
+					sendNoticeToMember( $members->{$loginId}, "New");
 				}
 			}
 
@@ -737,7 +743,7 @@ print "Got password reset request for " .$self->session('user') . "\n";
 
 			if ( $config{DirectoryAutoWelcome})
 			{
-				sendEmailToMember( $json, "New");
+				sendNoticeToMember( $json, "New");
 			}
 		 
 			$self->render( json => {status=> 'Saved'});
@@ -881,9 +887,9 @@ print "Got password reset request for " .$self->session('user') . "\n";
 			my $memberInfo = lookupUser( $id, "");
 
 			##
-			##  Send the user an email
+			##  Send the user an email or SMS
 			##
-			sendEmailToMember( $memberInfo, "Reset");
+			sendNoticeToMember( $memberInfo, "Reset");
 
 			$self->render( json => {status=> 'Password reset'});
 		};

@@ -127,7 +127,7 @@ sub sendSMSTwilio($$)
 		{
 			print "*** ERROR ***   Unable to send TXT message!", "Twilio said: " . $response->{message} . "\n" . $response->{content} . "\n";
 
-			sendEmail( $config{AdminEmail}, 'Scheduler Program Alert', 'Scheduler Program Alert!', "Trying to send a message to $to returned the following error: " .  $response->{content});
+			sendEmail( $config{AdminEmail}, 'Church Suite Program Alert', 'Church Suite Program Alert!', "Trying to send a message to $to returned the following error: " .  $response->{content});
 			$rc = 1;
 		}
 		else

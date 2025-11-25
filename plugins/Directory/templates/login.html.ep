@@ -2,6 +2,7 @@
 
 <html>
 <head>
+	<script src="/common/Dialog.js"> </script>
 	<link rel="stylesheet" href="/scheduler/site.css">
 </head>
 
@@ -34,6 +35,17 @@
 
 </style>
 
+<script>
+//------------------------------------------------------------------------------
+//  function resetMyPassword()
+//------------------------------------------------------------------------------
+function resetMyPassword()
+{
+	Dialog.Alert( {title: "Forgot your login information?", text: "To reset your password, contact <%= $admin %>"});
+}
+
+</script>
+
 <body>
 	<div id="xoverlay">
 
@@ -47,7 +59,9 @@
 				<input class="form-control" id="password" name="password" type="password" size="40" />
 				</div>
 				<input class="btn btn-primary" type="submit" value="Sign In">
-				<br/>  <br/>
+				<br/>  
+				<p onclick="resetMyPassword()"><u>Forgot my password</u></p>
+				<br/>
 			</form>
 
 			% if (defined( flash 'error') ) {
@@ -55,6 +69,7 @@
 					<center><b> <%= flash 'error' %> </b></center>
 				</div>
 			%}
+
 		</div>
 
 	</div>
