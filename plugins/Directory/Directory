@@ -56,7 +56,7 @@ print "Got login request for $username/$password\n";
 		##
 		my $memberInfo = lookupUser( $username, $password);
 
-		if ( defined( $memberInfo))
+		if ( defined( $memberInfo) && defined($memberInfo->{password}) && length( $memberInfo->{password}))
 		{
 		print "Found it!\n";
 			my $cookie = Mojo::Cookie::Response->new( name=>'UID', value=>$memberInfo->{UID}, expires=>time() + 3600);
@@ -64,7 +64,7 @@ print "Got login request for $username/$password\n";
 			my $lastCall = $self->session->{lastCall};
 			print "Its: $lastCall\n";
 			$lastCall =~ s/^\/directory//;
-			if ( defined( $lastCall) and length( $lastCall))
+			if ( defined( $lastCall) and length( $lastCall) > 1)
 			{
 				print "Redirecting to $lastCall\n";
 ##-->				$self->redirect_to( $self->session->{lastCall});
@@ -73,18 +73,18 @@ print "Got login request for $username/$password\n";
 			else
 			{
 				print "memberInfo=" . Dumper( $memberInfo) . "\n";
-				if ( ! defined($memberInfo->{password}))
-				{
+##-->				if ( ! defined($memberInfo->{password}) || !length( $memberInfo->{password}))
+##-->				{
 ##-->					print "Redirecting...\n";
 ##-->					$self->stash( loginId => $memberInfo->{loginId});
 ##-->					$self->session('user' => $memberInfo->{loginId});
 ##-->					$self->session( 'UID' => $memberInfo->{UID});
 ##-->					$self->render( 'setPassword');
 ##-->					return;
-					$self->flash( error=> 'Invalid login name or password!');
-					$self->redirect_to( '/login');
-					return;
-				}
+##-->					$self->flash( error=> 'Invalid login name or password!');
+##-->					$self->redirect_to( '/login');
+##-->					return;
+##-->				}
 				print "Rendering \/\n";
 				$self->redirect_to( '/');
 			}

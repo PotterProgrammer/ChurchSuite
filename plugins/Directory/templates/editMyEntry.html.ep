@@ -309,7 +309,7 @@ function getFormInfo()
           <input type="text" id="lastName" name="lastName" required value="<%= $memberInfo->{lastName} %>"></input>
         
           <label class="infoLabel"  for="children">Children:</label>
-          <input type="text" id="address" name="address" value="<%= $memberInfo->{address} %>"></input>
+          <input type="text" id="children" name="children" value="<%= $memberInfo->{children} %>"></input>
           <span></span><span></span>
 
           <label class="infoLabel"  for="address">Address:</label>

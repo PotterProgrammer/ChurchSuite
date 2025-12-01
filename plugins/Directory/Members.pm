@@ -31,24 +31,40 @@ sub initDB()
 	openDB();
 
 	##
-	##  Create Schedule table
+	##  Look to see if the DB has a "members" table
 	##
-	$dbh->do( "create table if not exists members
-				   ( loginId text,
-					 firstName text,
-					 lastName text,
-					 address text,
-					 city text,
-					 zip text,
-					 email text,
-					 phone text,
-					 cell text,
-					 photo text,
-					 UID text unique,
-					 password text,
-					 admin boolean,
-					 primary key( 'loginId')
-				   )");
+	my $rows = $dbh->selectall_arrayref( "select count(*) from sqlite_master where type='table' and name='members'");
+
+	if ( $rows->[0][0] == 0)
+	{
+		##
+		##  If not, create members table
+		##
+		$dbh->do( "create table if not exists members
+					   ( loginId text,
+						 firstName text,
+						 lastName text,
+						 children text,
+						 address text,
+						 city text,
+						 zip text,
+						 email text,
+						 email2 text,
+						 phone text,
+						 cell text,
+						 cell2 text,
+						 photo text,
+						 UID text unique,
+						 password text,
+						 admin boolean,
+						 primary key( 'loginId')
+					   )");
+
+		##
+		##  Create the initial admin account
+		##
+		$dbh->do( "insert into members (loginID, firstName, lastName, UID, password, admin) values ('DirectoryAdmin', 'Directory', 'Admin (Consider removing)',42, 'photos', 1)");
+	}
 
 	closeDB();
 }
@@ -61,7 +77,7 @@ sub openDB()
 {
 	if ( !defined( $dbh))
 	{
-		$dbh = DBI->connect( "dbi:SQLite:$DBFilename", "", "", {AutoCommit =>1}) or die "Sorry, couldn't open schedule database!\n";
+		$dbh = DBI->connect( "dbi:SQLite:$DBFilename", "", "", {AutoCommit =>1}) or die "Sorry, couldn't open directory database!\n";
 		$dbh->{sqlite_unicode} = 1;
 	}
 }

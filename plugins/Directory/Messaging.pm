@@ -121,13 +121,13 @@ sub sendNoticeToMember($$)
 			sendEmail( $member->{email}, $config{DirectoryEmailSender}, $msgTypes{$msgType}{message}, $email, 'email/directory/directoryLogo.png');
 			print "Sent\n";
 		}
-		elsif ( defined( $member->{cell}) && ( $member->{cell} =~ m/^[0-9-\(\) ]+$/))
+		elsif ( defined( $member->{cell}) && ( $member->{cell} =~ m/^[0-9-\(\) ]+/))
 		{
 			##
 			##  Send a text
 			##
 			my $phone = $member->{cell};
-			$phone =~ s/[\(\) -]//g;
+			$phone =~ s/[^0-9\+]//g;
 
 			##
 			##  Send the reminder text
@@ -156,6 +156,7 @@ sub sendNoticeToMember($$)
 			##  need to provide this information to $name.
 			##
 			$email =~ s/<body>/<body>\n$config{DirectoryAdminName}, please note: <b>$name<\/b> does not have an email or cell phone number entered in the directory, so the following message could not be sent automatically.<p>Please provide the following information to $name so that $name can access the directory.<\/p><hr>\n/;
+			$email =~ s/(<a href="([^"]*)">)click here/goto $1$2<\/a> in your browser/;
 
 			##
 			##  Send the email

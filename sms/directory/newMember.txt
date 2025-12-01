@@ -1,0 +1,19 @@
+Hello __FIRST_NAME__,
+This is quick note to let you know that you have been added to the online directory.
+
+ 
+You can view the directory from your browser on your phone or computer by going to
+__ACCESS_URL__, and logging in with your login name (__LOGIN_ID__) and password.  
+But first, to activate your account and set your password, please goto __ACTIVATE_URL__.
+
+
+If you have any questions or problems with the directory, please contact __DIRECTORY_ADMIN__:
+
+	Email: __DIRECTORY_ADMIN_EMAIL__
+	Phone: __DIRECTORY_ADMIN_PHONE__
+	Text:  __DIRECTORY_ADMIN_TEXT_NUMBER__
+
+
+
+
+
