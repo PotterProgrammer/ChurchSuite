@@ -236,49 +236,51 @@ window.addEventListener( "load", function ()
 			</div -->
 		</div>
 	</div>
-	<div class="indivCol showCheckBoxes">
-		<div>
-			<label for="individuals">Individuals:</label>
-			<p/>
-			<select name="individuals" class="individuals" id="individuals" size="11" multiple>
-				<option value="Bob 41" class="multiSel" type="member">Bob</option>
-				<option value="Gus 41" class="multiSel" type="member">Gus</option>
-				<option value="Sam 41" class="multiSel" type="member">Sam</option>
-				<option value="Joe 41" class="multiSel" type="member">Joe</option>
-				<option value="Will 41" class="multiSel" type="member">William A. Stanley</option>
-			</select>
-			<p/>
+	<form name="sendMessage" action="<%=url_for('sendMessage')->to_abs%>" method="post" style="display:contents;">
+		<div class="indivCol showCheckBoxes">
 			<div>
-				<button onClick="selectAllContacts()">Select All</button>
-				<button onClick="clearContacts()">Select None</button>
+				<label for="individuals">Individuals:</label>
+				<p/>
+				<select name="individuals" class="individuals" id="individuals" size="11" multiple>
+					<option value="Bob 41" class="multiSel" type="member">Bob</option>
+					<option value="Gus 41" class="multiSel" type="member">Gus</option>
+					<option value="Sam 41" class="multiSel" type="member">Sam</option>
+					<option value="Joe 41" class="multiSel" type="member">Joe</option>
+					<option value="Will 41" class="multiSel" type="member">William A. Stanley</option>
+				</select>
+				<p/>
+				<div>
+					<button onClick="selectAllContacts()">Select All</button>
+					<button onClick="clearContacts()">Select None</button>
+				</div>
 			</div>
 		</div>
-	</div>
-	<div class="messageCol">
-		<div class="messageWindow">
-			<div class="label1">
-				<label for="from">From:</label>
-			</div>
-			<div class="from">
-				<input type="text" name="from" id="name" placeholder="From (for email)">
-			</div>
-			<div class="label2">
-				<label for="subject">Subject:</label>
-			</div>
-			<div class="subject">
-				<input type="text" name="subject" id="subject" placeholder="Subject (for email)">
-			</div>
-			<div class="label3">
-				<label for="theMessage">Message:</label>
-			</div>
-			<div class="messageText">
-				<textarea name="theMessage" id="messageText" placeholder="Message to send"></textarea>
-			</div>
-			<div class="sendButton">
-				<button onClick="sendMessage()">Send Message</button>
+		<div class="messageCol">
+			<div class="messageWindow">
+				<div class="label1">
+					<label for="from">From:</label>
+				</div>
+				<div class="from">
+					<input type="text" name="from" id="name" placeholder="From (for email)">
+				</div>
+				<div class="label2">
+					<label for="subject">Subject:</label>
+				</div>
+				<div class="subject">
+					<input type="text" name="subject" id="subject" placeholder="Subject (for email)">
+				</div>
+				<div class="label3">
+					<label for="theMessage">Message:</label>
+				</div>
+				<div class="messageText">
+					<textarea name="theMessage" id="messageText" placeholder="Message to send"></textarea>
+				</div>
+				<div class="sendButton">
+					<input type="submit" value="Send Message"></input>
+				</div>
 			</div>
 		</div>
-	</div>
+	</form>
 </div>
 
 </body>

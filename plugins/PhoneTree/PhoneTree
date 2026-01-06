@@ -13,13 +13,39 @@ use lib "./plugins";
 use Common::CS_Config;
 
 use PhoneTree::Members;
+use PhoneTree::Messages;
 
 use File::Copy;
+use Proc::Simple;
+use Mojo::IOLoop;
 use Mojolicious::Lite;
 
+my $messenger;
 
 #main:
 {
+	##
+	##  On startup, schedule test every minute to see if Messenger
+	##  task needs to be started. (This is for
+	##  instances where a shutdown happened while
+	##  messages were being sent.)
+	##
+	Mojo::IOLoop->recurring( 60 => sub()
+		{
+			if ( messagesArePending())
+			{
+				##
+				##  Is a messenger running?
+				##
+				if (( defined( $messenger) && ! $messenger->poll()) ||
+					( !defined( $messenger)))
+				{
+					startMessenger();
+				}
+			}
+		});
+	
+
 	#------------------------------------------------------------------------------
 	#	get '/'
 	#------------------------------------------------------------------------------
@@ -223,7 +249,35 @@ use Mojolicious::Lite;
 		$self->render( json => { deleted => $added});
 	};
 
+	#------------------------------------------------------------------------------
+	#	post '/sendMessage' 
+	#------------------------------------------------------------------------------
+	post '/sendMessage' => sub
+	{
+		my ( $self) = @_;
 
+		my $toList = $self->every_param( 'individuals');
+		my $from =  $self->param( 'from');
+		my $message = $self->param( 'theMessage');
+		my $subject = $self->param( 'subject');
+
+
+		##
+		##  Queue up the list of messages to send
+		##
+		foreach my $id (@$toList)
+		{
+			my $info = readContactInfo( $id);
+			my $name = $info->{firstname} . ' ' . $info->{lastname};
+			print "Sending message to $name ($id) from $from with a subject of \"$subject\" and a message of \"$message\".\n";
+			storeMessage( $id, $from, $subject, $message);
+		}
+
+		##
+		##  Make sure the messenger is sending queued messages
+		##
+		startMessenger();
+	};
 
 	#------------------------------------------------------------------------------
 	#	websocket '/getContacts'
@@ -310,6 +364,21 @@ use Mojolicious::Lite;
 	app->config( hypnotoad=>{listen =>['http://*:3000']});
 	app->secrets( ['Your mileage may vary']);
 	return app->start;
+}
+
+#------------------------------------------------------------------------------
+#  sub startMessenger()
+#  		This routine launches the messenger app to send any messages which are
+#  		queued up, unless it is already running.
+#------------------------------------------------------------------------------
+sub startMessenger()
+{
+	$messenger //= Proc::Simple->new();
+
+	if ( ! $messenger->poll())
+	{
+		$messenger->start( "perl messenger");
+	}
 }
 
 

@@ -1,0 +1,177 @@
+#!/usr/bin/env perl
+#------------------------------------------------------------------------------
+#  A Perl script to send queued messages from the Phone Tree.  This script can
+#  be run in the background, and it uses multiprocessing to send multiple
+#  messages simultaneously.
+#------------------------------------------------------------------------------
+
+use warnings;
+use strict;
+
+use lib "./plugins";
+
+use Common::CS_Contact;
+use PhoneTree::Members;
+use PhoneTree::Messages;
+
+use Proc::Simple;
+
+my $RETRY_COUNT = 5;   ## Try resending messages 5 times before marking it failed.
+my $threads = 4;	   ## Send up to 4 messages simultaneously
+
+my @procs;
+
+sub sendAMessage($);
+
+#main:
+{
+	for( 1..$threads)
+	{
+		push( @procs, Proc::Simple->new());
+	}
+
+	##
+	##  Reset any messages that were in a "Sending"
+	##  state when a shutdown occurred.
+	##
+	resetToPending();
+
+	##
+	##  Clear any previously sent messages to keep DB size small
+	##
+	purgeSentMessages();
+	
+	##
+	##  Loop while there are pending messages 
+	##
+	while( messagesArePending())
+	{
+		my $list = pendingMessages();
+
+		foreach my $messageToSend ( @$list)
+		{
+			##
+			##  Mark the message as being sent and launch a
+			##  background process to send it.
+			##
+			setMessageStatus( $messageToSend->{rowid}, "Sending");
+			launch( \&sendAMessage, $messageToSend);
+		}
+	}
+}
+
+#------------------------------------------------------------------------------
+#  sub launch( $fn, $parm)
+#  		This method launches a background task to run the indicated function 
+#  		with the provided parm.
+#------------------------------------------------------------------------------
+sub launch($$)
+{
+	my $launched = 0;
+	my ( $fn, $parm) = @_;
+
+	do
+	{
+		##
+		##  Find a free Proc
+		##
+		my @availableProcs = grep {! $_->poll()} @procs;
+
+		if ( @availableProcs)
+		{
+			$launched = 1;
+			$availableProcs[0]->start( $fn, $parm);
+		}
+	} while( !$launched && sleep(10) );
+}
+
+#------------------------------------------------------------------------------
+#  sub sendAMessage( $messageInfo)
+#  		This routine sends the message indicated by the hashRef $messageInfo.
+#  		If successful, the message
+#------------------------------------------------------------------------------
+sub sendAMessage($)
+{
+	my $messageInfo = shift(@_);
+
+	my $rowId		= $messageInfo->{rowid};
+	my $sendTo		= $messageInfo->{sendTo};
+	my $from		= $messageInfo->{fromWho};
+	my $subject		= $messageInfo->{subject};
+	my $message 	= $messageInfo->{message};
+	my $retryCount	= $messageInfo->{retryCount};
+
+	##
+	##  Get the user info for the recipient.
+	##
+	my $userInfo = readContactInfo( $sendTo);
+
+	my @sendList = grep {defined( $_)}( $userInfo->{tryFirst}, $userInfo->{trySecond}, $userInfo->{tryThird});
+	my $sent = 0;
+
+	print "Sending message to $userInfo->{firstname} $userInfo->{lastname}\n";
+	##
+	##  Try sending the message
+	##
+	foreach my $method (@sendList)
+	{
+		if ( $method =~ /email/i)
+		{
+			my $rc = !print( " sendEmail( $userInfo->{email}, $from, $subject, $message)\n");
+			sleep 5;
+##-->			my $rc = sendEmail( $userInfo->{email}, $from, $subject, $message);
+			$sent = !$rc;
+		}
+
+		if ( $method =~ /text/i)
+		{
+			my $rc = !print( "sendSMSTwilio( $userInfo->{cell}, $message)\n");
+			sleep 5;
+##-->			my $rc = sendSMSTwilio( $userInfo->{cell}, $message);
+			$sent = !$rc;
+		}
+
+		if ( $method =~ /phone/i)
+		{
+			my $rc = !print( "makeTwilioAutoCall( $userInfo->{homephone}, $message)\n");
+			sleep 5;
+			$rc =1;
+##-->			my $rc = makeTwilioAutoCall( $userInfo->{homephone}, $message)
+			$sent = !$rc;
+		}
+
+		##
+		##  If the request wasn't made to send to each one,
+		##  then exit the loop, if a message was sent
+		##
+		if ( !$userInfo->{callAll} && $sent)
+		{
+			last;
+		}
+	}
+
+	##
+	##  Was the message sent?
+	##
+	if ( $sent)
+	{
+		setMessageStatus( $rowId, "Sent");
+	}
+	else
+	{
+		##
+		##  Should we retry again?
+		##
+		if ( $retryCount < $RETRY_COUNT)
+		{
+			bumpRetryCount( $rowId);
+			setMessageStatus( $rowId, "Pending");
+		}
+		else
+		{
+			setMessageStatus( $rowId, "Failed");
+		}
+	}
+}
+
+

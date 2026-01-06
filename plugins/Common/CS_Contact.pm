@@ -76,7 +76,7 @@ sub sendEmail(@)
 }
 
 #------------------------------------------------------------------------------
-#  sub sendSMSTwilio($$$)
+#  sub sendSMSTwilio($$)
 #		Send an SMS message using Twilio to transmit. This function returns a
 #		non-zero value on error.
 #------------------------------------------------------------------------------

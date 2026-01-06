@@ -52,6 +52,7 @@ sub initDB()
 						isGroup integer not null default 0
 					)'
 			);
+
 	closeDB();
 }
 
@@ -282,6 +283,7 @@ sub removeGroup($)
 
 	return( $rowsDeleted);
 }
+
 
 #------------------------------------------------------------------------------
 #  BEGIN
