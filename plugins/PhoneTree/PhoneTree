@@ -2,6 +2,7 @@
 
 use warnings;
 use strict;
+use v5.36.0;
 
 use Data::Dumper;
 
@@ -12,6 +13,7 @@ use lib "./plugins";
 
 use Common::CS_Config;
 
+use PhoneTree::BackupRestore;
 use PhoneTree::Members;
 use PhoneTree::Messages;
 
@@ -21,6 +23,7 @@ use Mojo::IOLoop;
 use Mojolicious::Lite;
 
 my $messenger;
+my $backupPassphrase = 'ReesesPieces';
 
 #main:
 {
@@ -30,7 +33,7 @@ my $messenger;
 	##  instances where a shutdown happened while
 	##  messages were being sent.)
 	##
-	Mojo::IOLoop->recurring( 60 => sub()
+	Mojo::IOLoop->recurring( 60 => sub($bob)
 		{
 			if ( messagesArePending())
 			{
@@ -44,7 +47,87 @@ my $messenger;
 				}
 			}
 		});
+
+	print "BEEP!\n";
 	
+	#------------------------------------------------------------------------------
+	#  get '/login' -- This is the main login screen
+	#------------------------------------------------------------------------------
+	get '/login' => sub
+	{
+		my $self = shift( @_);
+
+		$self->render( 'login');
+	};
+
+	#------------------------------------------------------------------------------
+	#  post '/login' -- This screen processes the login entry
+	#------------------------------------------------------------------------------
+	post '/login' => sub
+	{
+		my $self = shift;
+		my $username = $self->param( 'user');
+		my $password = $self->param( 'password');
+
+		if ( isPhoneTreeAdmin( $username, $password))
+		{
+			my $cookie = Mojo::Cookie::Response->new( name=>'UID', value=> getPhoneTreeAdminUID(), expires=>time() + 3600);
+			$self->res->cookies( $cookie);
+			my $lastCall = $self->session->{lastCall};
+			$lastCall =~ s/^\/phonetree//;
+			if ( defined( $lastCall) and length( $lastCall))
+			{
+				print "Redirecting to $lastCall\n";
+				$self->redirect_to( $lastCall);
+			}
+			else
+			{
+				print "Rendering \/\n";
+				$self->redirect_to( '/');
+			}
+		}
+		else
+		{
+			$self->flash( error=> 'Invalid login name or password!');
+			$self->redirect_to( '/login');
+		}
+	};
+
+	get '/logoff' => sub
+	{
+		my $self = shift;
+		my $cookie = Mojo::Cookie::Response->new( name=>'UID', value=> '', expires=>1);
+		$self->res->cookies( $cookie);
+
+		$self->redirect_to( '/login');
+	};
+
+
+
+	#------------------------------------------------------------------------------
+	#  EVERY page below here first gets autothenticated by this routine
+	#------------------------------------------------------------------------------
+	under sub
+	{
+		my $self = shift;
+
+		##
+		##	Is the user already logged in as an admin?
+		##
+		if ( defined( $self->cookie( 'UID')) && ( isPhoneTreeAdminUID( $self->cookie('UID'))))
+		{
+			return 1;
+		}
+
+		##
+		##  Remember the page asked for
+		##
+		$self->session->{lastCall} = $self->{tx}->{req}->{url}->{path}->{path};
+		$self->redirect_to( 'login');
+
+		return;
+	};
+
 
 	#------------------------------------------------------------------------------
 	#	get '/'
@@ -82,6 +165,54 @@ my $messenger;
 	};
 
 	#------------------------------------------------------------------------------
+	#	post '/saveConfig'
+	#		This call saves the newly defined configuration settings
+	#------------------------------------------------------------------------------
+	post '/saveConfig' => sub
+	{
+		my $self = shift(@_);
+
+		if ( $self->param('submit') =~ /Save/)
+		{
+			my %config;
+
+			$config{"EmailServer"} = $self->param( "EmailServer");
+			$config{"EmailPort"} = $self->param( "EmailPort");
+			$config{"EmailUID"} = $self->param( "EmailUID");
+			$config{"EmailPWD"} = $self->param( "EmailPWD");
+			$config{"PhoneTreeEmailSender"} = $self->param( "PhoneTreeEmailSender");
+			$config{"TwilioAcct"} = $self->param( "TwilioAcct");
+			$config{"TwilioAuth"} = $self->param( "TwilioAuth");
+			$config{"TwilioPhone"} = $self->param( "TwilioPhone");
+			$config{"TwilioIntro"} = $self->param( "TwilioIntro");
+			$config{"TwilioGender"} = $self->param( "TwilioGender");
+			$config{"Logging"} = ($self->param( "Logging") eq 'Y') ? 1 : 0;
+			$config{"MaxRetries"} = $self->param( "MaxRetries");
+			$config{"DelayBetweenRetries"} = $self->param( "DelayBetweenRetries");
+			$config{"CallerIDNumber"} = $self->param( "CallerIDNumber");
+			$config{"PhoneTreeAdminLogin"} = $self->param( "PhoneTreeAdminLogin");
+			$config{"PhoneTreeAdminPWD"} = $self->param( "PhoneTreeAdminPWD");
+
+			saveConfig( %config);
+		}
+
+		$self->stash( restored => "no", textMessage=>'', title=>'');
+		$self->render( "index");
+	};
+
+	#------------------------------------------------------------------------------
+	#	get '/cleanBackup'
+	#		Removes the backup file created for file download and redirects to /index
+	#------------------------------------------------------------------------------
+	get '/cleanBackup' => sub
+	{
+		my ($self) = @_;
+		print "Removing public/$PhoneTree::BackupRestore::baseBackupFilename\n";
+		unlink( "public/$PhoneTree::BackupRestore::baseBackupFilename");
+		$self->render( "index");
+	};
+
+	#------------------------------------------------------------------------------
 	#	get '/editMembers'
 	#------------------------------------------------------------------------------
 	get '/editMembers' => sub
@@ -110,6 +241,30 @@ my $messenger;
 
 		$self->render( 'sendMessage');
 	};
+	
+	#------------------------------------------------------------------------------
+	#	get '/scheduled'
+	#------------------------------------------------------------------------------
+	get '/scheduled' => sub
+	{
+		my ($self) = @_;
+
+		$self->render( 'sendScheduledMessage');
+	};
+	
+	#------------------------------------------------------------------------------
+	#	get '/restore'
+	#		This call routes to the page for restoring from a backup
+	#------------------------------------------------------------------------------
+	get '/restore' => sub
+	{
+		my $self = shift;
+
+		$self->stash( backupFile => undef);
+		$self->render( 'restoreBackup');
+	};
+
+
 
 	#------------------------------------------------------------------------------
 	#	post '/addMember' 
@@ -260,7 +415,7 @@ my $messenger;
 		my $from =  $self->param( 'from');
 		my $message = $self->param( 'theMessage');
 		my $subject = $self->param( 'subject');
-
+		my $whenToSend = $self->param( 'whenToSend');
 
 		##
 		##  Queue up the list of messages to send
@@ -270,14 +425,92 @@ my $messenger;
 			my $info = readContactInfo( $id);
 			my $name = $info->{firstname} . ' ' . $info->{lastname};
 			print "Sending message to $name ($id) from $from with a subject of \"$subject\" and a message of \"$message\".\n";
-			storeMessage( $id, $from, $subject, $message);
+			storeMessage( $id, $from, $subject, $message, $whenToSend);
 		}
 
 		##
 		##  Make sure the messenger is sending queued messages
 		##
 		startMessenger();
+
+		if ( defined( $whenToSend))
+		{
+			$self->stash( title => 'Messages Queued', textMessage=>"Messages will be sent on $whenToSend", showFor => 2000);
+		}
+		else
+		{
+			$self->stash( title => 'Messages Sending', textMessage=>"Messages are being sent", showFor => 2000);
+		}
+
+		$self->render( "index");
 	};
+	
+	
+	#------------------------------------------------------------------------------
+	#	post '/restore'
+	#		This call carries out the actual restore
+	#------------------------------------------------------------------------------
+	post '/restore' => sub
+	{
+		my $self = shift;
+	 
+		# Check file size
+		if ($self->req->is_limit_exceeded)
+		{
+			return $self->render(text => 'File is too big.', status => 200);
+		}
+	 
+		# Process uploaded file
+		my $filename = $self->param('filename');
+
+		my %response = restoreBackup( $filename, $backupPassphrase);
+
+		print "Got back " . Dumper( %response) . "\n";
+		$self->stash( textMessage => $response{textMessage}, backupFile=> $response{backupFile}, title=> $response{title}, showFor => $response{showFor});
+		
+		if ( !defined( $response{backupFile}))
+		{
+			print "Rendering index...\n";
+			$self->render( 'index');
+		}
+		else
+		{
+			$self->render( 'restoreBackup');
+		}
+	};
+	
+	#------------------------------------------------------------------------------
+	#  post '/restoreCommon'
+	#  		This call restores the common config settings from the provided
+	#  		temporary backup filename.
+	#------------------------------------------------------------------------------
+	post '/restoreCommon' => sub
+	{
+		my $self = shift;
+
+		my $json = $self->req->json();
+		my $backupName = $json->{backupName};
+		
+		restoreCommonSettings( $backupName, $backupPassphrase);
+		$self->render( 'index');
+	};
+	
+	#------------------------------------------------------------------------------
+	#  post '/releaseBackupData'
+	#  		This call releases the temporarily stored common configuration settings
+	#  		backup file created during the restore.
+	#------------------------------------------------------------------------------
+	post '/releaseBackupData' => sub
+	{
+		my $self = shift;
+
+		my $json = $self->req->json();
+		my $backupName = $json->{backupName};
+		
+		releaseBackupData( $backupName);
+		$self->render( 'admin');
+	};
+	
 
 	#------------------------------------------------------------------------------
 	#	websocket '/getContacts'
@@ -288,7 +521,7 @@ my $messenger;
 	{
 		my $self = shift;
 		my $list = readContacts();
-		print "Sending:\n\t" . Dumper( $list)."\n";
+##-->		print "Sending:\n\t" . Dumper( $list)."\n";
 		$self->send( {json => $list});
 	};
 
@@ -310,7 +543,7 @@ my $messenger;
 						
 						my $info = readContactInfo( $rowid);
 
-						print "Sending:\n" . Dumper( $info) . "\n\n";
+##-->						print "Sending:\n" . Dumper( $info) . "\n\n";
 						##
 						##  Send back the response
 						##
@@ -351,7 +584,7 @@ my $messenger;
 						print "I see group $group\n";
 						my $info = getGroupMembers( $group);
 
-						print "Sending:\n" . Dumper( $info) . "\n\n";
+##-->						print "Sending:\n" . Dumper( $info) . "\n\n";
 						##
 						##  Send back the response
 						##
@@ -359,6 +592,35 @@ my $messenger;
 					}
 				  );
 	};
+	
+	#------------------------------------------------------------------------------
+	#	websocket '/backup'
+	#		This call stores the existing config and database in a tar file,
+	#		encrypts it, and then makes it available for download.
+	#------------------------------------------------------------------------------
+	websocket '/backup' => sub
+	{
+		my $ws = shift;
+
+		$ws->on (text => sub
+			{
+				$ws->inactivity_timeout(300);
+				my ($ws, $message) = @_;
+
+				print "Got a '$message' request\n";
+				if ( $message =~ m/Backup/)
+				{
+					my $backupFilename = backupData( $backupPassphrase);
+					$ws->send( $backupFilename);
+				}
+				else
+				{
+					$ws->send( "What??!");
+				}
+			}
+			);
+	};
+
 
 
 	app->config( hypnotoad=>{listen =>['http://*:3000']});
@@ -373,6 +635,9 @@ my $messenger;
 #------------------------------------------------------------------------------
 sub startMessenger()
 {
+	print "*****************************\n";
+	print "  Starting the messenger...\n";
+	print "*****************************\n";
 	$messenger //= Proc::Simple->new();
 
 	if ( ! $messenger->poll())
@@ -381,4 +646,44 @@ sub startMessenger()
 	}
 }
 
+#------------------------------------------------------------------------------
+#  sub isPhoneTreeAdmin(user, $pwd)
+#  		Returns true if the name and password match the configured value for
+#  		the PhoneTree admin.
+#------------------------------------------------------------------------------
+sub isPhoneTreeAdmin( $user, $pwd)
+{
+	my %config = getConfigInfo();
+
+	return( ($user eq $config{PhoneTreeAdminLogin}) && ( $pwd eq $config{PhoneTreeAdminPWD}));
+}
+
+#------------------------------------------------------------------------------
+#	sub getPhoneTreeAdminUID()
+#		This routine generates a random 10 character alpha-numeric string
+#		suitable for an Admin.
+#------------------------------------------------------------------------------
+sub getPhoneTreeAdminUID()
+{
+	my @chars = ( 'a'..'z', '0'..'9', 'A'..'Z');
+	my $id;
+	do 
+	{
+		$id = '';
+		for( 1..10)
+		{
+			$id .= $chars[ int rand( @chars)];
+		}
+	} while( (unpack( "%32W*", $id) % 42) != 0);
+
+	return $id;
+}
+
+#------------------------------------------------------------------------------
+#	sub isPhoneTreeAdminUID( $id) 
+#------------------------------------------------------------------------------
+sub isPhoneTreeAdminUID( $id)
+{
+	return( !( unpack( "%32W*", $id) % 42));
+}
 

@@ -22,8 +22,7 @@ use Mojolicious::Lite;
 
 
 my $members;
-my $membersFile = './members.json';
-my $membersFileBackup = './members.json.backup';
+my $backupPassphrase = 'EnjoyTheView';
 
 #main:
 {
@@ -675,8 +674,22 @@ print "Got password reset request for " .$self->session('user') . "\n";
 		{
 			my $self = shift;
 
+			$self->stash( backupFile => undef);
 			$self->render( 'restoreBackup');
 		};
+
+		#------------------------------------------------------------------------------
+		#	get '/cleanBackup'
+		#		Removes the backup file created for file download and redirects to /admin
+		#------------------------------------------------------------------------------
+		get '/cleanBackup' => sub
+		{
+			my ($self) = @_;
+			print "Removing public/$Directory::BackupRestore::baseBackupFilename\n";
+			unlink( "public/$Directory::BackupRestore::baseBackupFilename");
+			$self->render( "admin");
+		};
+
 
 		#------------------------------------------------------------------------------
 		#  post '/uploadPhoto'
@@ -850,13 +863,54 @@ print "Got password reset request for " .$self->session('user') . "\n";
 			# Process uploaded file
 			my $filename = $self->param('filename');
 
-			my %response = restoreBackup( $filename);
+			my %response = restoreBackup( $filename, $backupPassphrase);
 
 			print "Got back " . Dumper( %response) . "\n";
-			$self->stash( textMessage => $response{textMessage}, title=> $response{title}, showFor => $response{showFor});
-			print "Rendering index...\n";
+			$self->stash( textMessage => $response{textMessage}, backupFile=> $response{backupFile}, title=> $response{title}, showFor => $response{showFor});
+			
+			if ( !defined( $response{backupFile}))
+			{
+				print "Rendering index...\n";
+				$self->render( 'admin');
+			}
+			else
+			{
+				$self->render( 'restoreBackup');
+			}
+		};
+		
+		#------------------------------------------------------------------------------
+		#  post '/restoreCommon'
+		#  		This call restores the common config settings from the provided
+		#  		temporary backup filename.
+		#------------------------------------------------------------------------------
+		post '/restoreCommon' => sub
+		{
+			my $self = shift;
+
+			my $json = $self->req->json();
+			my $backupName = $json->{backupName};
+			
+			restoreCommonSettings( $backupName, $backupPassphrase);
 			$self->render( 'admin');
 		};
+		
+		#------------------------------------------------------------------------------
+		#  post '/releaseBackupData'
+		#  		This call releases the temporarily stored common configuration settings
+		#  		backup file created during the restore.
+		#------------------------------------------------------------------------------
+		post '/releaseBackupData' => sub
+		{
+			my $self = shift;
+
+			my $json = $self->req->json();
+			my $backupName = $json->{backupName};
+			
+			releaseBackupData( $backupName);
+			$self->render( 'admin');
+		};
+		
 		
 		#------------------------------------------------------------------------------
 		#  post '/resetPassword'
@@ -937,7 +991,7 @@ print "Got password reset request for " .$self->session('user') . "\n";
 					print "Got a '$message' request\n";
 					if ( $message =~ m/Backup/)
 					{
-						my $backupFilename = backupData();
+						my $backupFilename = backupData( $backupPassphrase);
 						$ws->send( $backupFilename);
 					}
 					else

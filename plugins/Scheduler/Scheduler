@@ -38,6 +38,8 @@ my @Slots;
 my @Volunteers;
 my @Schedule;
 
+my $backupPassphrase = 'TryToBeTimely';
+
 sub findVolunteer($$);
 
 #main:
@@ -49,7 +51,7 @@ sub findVolunteer($$);
 	{
 		my $self = shift( @_);
 
-		$self->render( '/login');
+		$self->render( 'login');
 	};
 
 	#------------------------------------------------------------------------------
@@ -107,7 +109,6 @@ sub findVolunteer($$);
 	{
 		my $self = shift;
 		my $name = $self->param( "name");
-		print "The name is $name\n";
 		my $start = $self->param( "start");
 		my $end = $self->param( "end");
 
@@ -116,9 +117,15 @@ sub findVolunteer($$);
 			$self->render( "not_found");
 		}
 		my $calendar = makeCalendarFor( $name, $start, $end);
-
-		$self->res->headers->content_disposition( "attachment;filename=volunteer.ics");
-		$self->render( text=>$calendar);
+		if ( !defined( $calendar))
+		{
+			$self->render( "not_found");
+		}
+		else
+		{
+			$self->res->headers->content_disposition( "attachment;filename=volunteer.ics");
+			$self->render( text=>$calendar);
+		}
 	};
 
 	#------------------------------------------------------------------------------
@@ -147,7 +154,14 @@ sub findVolunteer($$);
 			##
 			if ( isValidUserID( $self->param("user"), $self->param( "UID")))
 			{
-				return 1;
+				##
+				##  And is the user calling one of the acceptable URLs?
+				##
+				my $url =  $self->{tx}->{req}->{url}->{path};
+				if ( $url =~ /(\/scheduler\/editVolunteer)|(\/scheduler\/modifyVolunteer)/)
+				{
+					return 1;
+				}
 			}
 
 			$self->render(  'not_found');
@@ -179,13 +193,11 @@ sub findVolunteer($$);
 	#------------------------------------------------------------------------------
 	get '/index' => sub
 	{
-		print "there...\n";
-
 		my ($self) = @_;
-warn join ":", @{app->static->paths};
-warn join ":", @{app->static->classes};
-warn join ":", @{app->renderer->paths};
-warn join ":", @{app->renderer->classes};
+##-->warn join ":", @{app->static->paths};
+##-->warn join ":", @{app->static->classes};
+##-->warn join ":", @{app->renderer->paths};
+##-->warn join ":", @{app->renderer->classes};
 		$self->stash( restored => "no", textMessage=>'', title=>'');
 		$self->render( 'index');
 	};
@@ -248,7 +260,15 @@ warn join ":", @{app->renderer->classes};
 		@Slots = readSlots();
 		@Volunteers = readVolunteers();
 
-		$self->stash( slots=>\@Slots, type=>"add", volunteers=>\@Volunteers, volunteer=>undef, userMode=>0, title=>"Add Volunteers");
+		$self->stash( slots=>\@Slots,
+					  type=>"add",
+					  volunteers=>\@Volunteers,
+					  volunteer=>undef,
+					  userMode=>0,
+					  name=> undef,
+					  id => undef,
+					  title=>"Add Volunteers"
+				     );
 
 		$self->render( "addVolunteers");
 
@@ -265,6 +285,8 @@ warn join ":", @{app->renderer->classes};
 		my $self = shift;
 		my $userMode = 0;
 		my $name = $self->param("edit");
+		my $id = '';
+
 		if ( defined( $name))
 		{
 			print "Editing user $name\n";
@@ -274,6 +296,7 @@ warn join ":", @{app->renderer->classes};
 			if ( defined( $name = $self->param( "user")))
 			{
 				print "Editing info for user $name\n";
+				$id = $self->param( 'UID');
 				$userMode = 1;
 			}
 		}
@@ -286,7 +309,15 @@ warn join ":", @{app->renderer->classes};
 
 		my ($index, $volunteer) = findVolunteer( 0, $name);
 
-		$self->stash( slots=> \@Slots, volunteers=>undef, volunteer=>$volunteer, type=>"edit", title=>"Edit Information for " . $name, userMode=>$userMode);
+		$self->stash( slots=> \@Slots,
+					  volunteers=>undef,
+					  volunteer=>$volunteer,
+					  type=>"edit",
+					  title=>"Edit Information for " . $name,
+					  name=>$name,
+					  id=>$id,
+					  userMode=>$userMode
+				    );
 
 		$self->render( "addVolunteers");
 
@@ -484,6 +515,7 @@ warn join ":", @{app->renderer->classes};
 	{
 		my $self = shift;
 
+		$self->stash( backupFile => undef);
 		$self->render( 'restoreBackup');
 	};
 
@@ -517,6 +549,18 @@ warn join ":", @{app->renderer->classes};
 		$self->render( 'about');
 	};
 
+	#------------------------------------------------------------------------------
+	#		Removes the backup file created for file download and redirects to /index
+	#------------------------------------------------------------------------------
+	get '/cleanBackup' => sub
+	{
+		my ($self) = @_;
+		print "Removing public/$Scheduler::SaveRestore::baseBackupFilename\n";
+		unlink( "public/$Scheduler::SaveRestore::baseBackupFilename");
+		$self->render( "index");
+	};
+
+
 	
 	#------------------------------------------------------------------------------
 	#	post '/restore'
@@ -536,88 +580,102 @@ warn join ":", @{app->renderer->classes};
 		my $filename = $self->param('filename');
 		my $size = $filename->size;
 		my $name = $filename->filename;
-		unlink( "dataBackup.tar");
-		SaveRestore::closeDB();
+		my $backupData = $filename->asset->slurp;
 
-		##
-		##  Decrypt the file data
-		##
-		my $pgp = Crypt::OpenPGP->new;
-		my $encrypted = $filename->asset->slurp;
-		my $backupData = $pgp->decrypt( Data => $encrypted, Passphrase => 'TryToBeTimely');
+		Scheduler::SaveRestore::closeDB();
 
-		if ( defined ( $backupData))
+		my ($restoreResult, $backupFilename) = restoreBackupData( $backupData, $backupPassphrase, 'Scheduler', ($Scheduler::SaveRestore::DBFilename, 'reminderSchedule.txt'));
+
+		if ( $restoreResult eq 'Success')
 		{
-			open( my $TAR, '>', "dataBackup.tar");
-			binmode( $TAR);
-			syswrite( $TAR, $backupData);
-			close( $TAR);
-
-			my $tar = Archive::Tar->new();
-			$Archive::Tar::INSECURE_EXTRACT_MODE = 1;
-			if ( $tar->read( 'dataBackup.tar'))
+			##
+			##  Do we have a schedule for sending reminders?
+			##
+			if ( -e 'reminderSchedule.txt')
 			{
-				if ($tar->extract())
+				open( my $FILE, '<', 'reminderSchedule.txt') || die "Couldn't open reminder schedule! $!\n";
+				my $data = <$FILE>;
+				close $FILE;
+				$data =~ m/(\d)\s+(\d+:\d+)\s+(\S+)/;
+				
+				##
+				##  Were reminders scheduled?
+				##
+				if ( $1)
 				{
 					##
-					##  Do we have a schedule for sending reminders?
+					##  If so, schedule them as before
 					##
-					if ( -e 'reminderSchedule.txt')
-					{
-						open( my $FILE, '<', 'reminderSchedule.txt') || die "Couldn't open reminder schedule! $!\n";
-						my $data = <$FILE>;
-						close $FILE;
-						$data =~ m/(\d)\s+(\d+:\d+)\s+(\S+)/;
-						
-						##
-						##  Were reminders scheduled?
-						##
-						if ( $1)
-						{
-							##
-							##  If so, schedule them as before
-							##
-							scheduleReminder( $3, $2, $self->tx->local_port);
-						}
-						else
-						{
-							##
-							##  If not, unschedule them
-							##
-							unscheduleReminder();
-						}
-					}
-
-					$self->stash( textMessage => "Restore completed!", title=>'Success', boxtime=>5);
-					print "\n\n\n\nRestored!!!\n\n\n";
+					scheduleReminder( $3, $2, $self->tx->local_port);
 				}
 				else
 				{
-					$self->stash( textMessage => "Unable to read backup file contents!", title=>'Warning!', boxtime=>5);
-					print "\n\n\n\nRead error!!!\n\n\n";
+					##
+					##  If not, unschedule them
+					##
+					unscheduleReminder();
 				}
 			}
-			else
-			{
-				$self->stash( textMessage => "Unable to read backup file!", title=>'Warning!', boxtime=>5);
-				print "\n\n\n\nTar read error!!!\n\n\n";
-			}
 
-			unlink( 'dataBackup.tar');
+			$self->stash( textMessage => "Restore completed!", title=>'Success', boxtime=>5);
+			print "Restore completed!\n";
 		}
 		else
 		{
-			$self->stash( textMessage => "Unable to read provided backup file!", title=>'Warning!', boxtime=>5);
+			$self->stash( textMessage => $restoreResult, title=>'Warning!', boxtime=>5);
 			print "\n\n\n\nDecryption read error dude!!!\n\n\n";
 		}
 
-		SaveRestore::initDB();
+		Scheduler::SaveRestore::initDB();
 
-		$self->stash( restored=>'yes');
-		print "Rendering index...\n";
+		##
+		##  Was the 'Common' configuration data restored?
+		##
+		if ( !defined( $backupFilename))
+		{
+			$self->stash( restored=>'yes');
+			$self->render( 'index');
+		}
+		else
+		{
+			$self->stash( backupFile => $backupFilename);
+			print "Getting overwrite confirmation from user...\n";
+			$self->render( "restoreBackup");
+		}
+	};
+	
+	#------------------------------------------------------------------------------
+	#  post '/restoreCommon'
+	#  		This call restores the common config settings from the provided
+	#  		temporary backup filename.
+	#------------------------------------------------------------------------------
+	post '/restoreCommon' => sub
+	{
+		my $self = shift;
+
+		my $json = $self->req->json();
+		my $backupName = $json->{backupName};
+		
+		restoreCommonSettings( $backupName, $backupPassphrase);
 		$self->render( 'index');
 	};
+	
+	#------------------------------------------------------------------------------
+	#  post '/releaseBackupData'
+	#  		This call releases the temporarily stored common configuration settings
+	#  		backup file created during the restore.
+	#------------------------------------------------------------------------------
+	post '/releaseBackupData' => sub
+	{
+		my $self = shift;
 
+		my $json = $self->req->json();
+		my $backupName = $json->{backupName};
+		
+		releaseBackupData( $backupName);
+		$self->render( 'index');
+	};
+	
 	#------------------------------------------------------------------------------
 	#  post '/modifyVolunteer'
 	#  		This call modifies information for the provided name in the
@@ -739,7 +797,7 @@ warn join ":", @{app->renderer->classes};
 				print "Got a '$message' request\n";
 				if ( $message =~ m/Backup/)
 				{
-					my $backupFilename = SaveRestore::backupData();
+					my $backupFilename = Scheduler::SaveRestore::backupData( $backupPassphrase);
 					$ws->send( $backupFilename);
 				}
 				else
@@ -1122,6 +1180,7 @@ warn join ":", @{app->renderer->classes};
 
 	app->config( hypnotoad=>{listen =>['http://*:3000']});
 	app->secrets( ['Your mileage may vary']);
+
 	return app->start;
 }
 

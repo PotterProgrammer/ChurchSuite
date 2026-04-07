@@ -189,11 +189,20 @@ fieldset,#dateEntry
 	font-size: 80%;
 }
 
+/*
 #confirmDialog 
 {
 	padding-left: 4em;
 	padding-right: 4em;
 	box-shadow: 10px 10px 5px rgba( 0, 0, 0, .68);
+}
+*/
+
+#confirmDialog
+{
+    text-align: center;
+    box-shadow: 10px 10px 5px rgba( 0,0,0,.6);
+    border-radius: 20px;
 }
 
 #dialogTitle
@@ -215,6 +224,7 @@ fieldset,#dateEntry
 	font-weight: bold;
 }
 
+/*
 #dialogButtonRow
 {
 	width:100%;
@@ -222,12 +232,22 @@ fieldset,#dateEntry
 	text-align:center;
 }
 
+
 #dialogButtonRow button
 {
 	width: 4em;
 	margin-left:auto;
 	margin-right:0;
 }
+*/
+
+#dialogButtonRow
+{
+    display: flex;
+    justify-content: center;
+    margin-top: 1em;
+}
+
 
 .popup
 {

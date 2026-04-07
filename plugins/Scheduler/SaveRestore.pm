@@ -21,6 +21,8 @@ use Crypt::OpenPGP;
 use Scheduler::Messaging;
 
 our $DBFilename = "./schedule.db";
+our $baseBackupFilename = 'schedulerBackup.pbt';
+
 my $dbh;
 my $verbose = 1;
 
@@ -623,41 +625,43 @@ sub updateScheduleReminded($)
 }
 
 #------------------------------------------------------------------------------
-#  sub backupData()
+#  sub backupData( $passphrase)
 #  		This function backs up the current DB and config info into a file and
 #  		returns the filename.
 #------------------------------------------------------------------------------
-sub backupData()
+sub backupData($)
 {
-		my $tar = Archive::Tar->new;
-		
-		##
-		##  Remove old files
-		##
-		unlink( 'public/dataBackup.pbt');
-		unlink( 'reminderSchedule.txt');
+	my $passphrase = shift( @_);
+	my $tar = Archive::Tar->new;
+	
+	##
+	##  Remove old files
+	##
+	unlink( "public/$baseBackupFilename");
+	unlink( 'reminderSchedule.txt');
 
-		##
-		##  Store the current reminder schedule
-		##
-		my ( $enabled, $hour, $minute, $weekday, $crontab) = readScheduledReminder();
-		open( my $FILE, '>', 'reminderSchedule.txt') || die "Couldn't save reminder schedule! $!\n";
-		printf $FILE "%d %02d:%02d  %s\n", $enabled, $hour, $minute, $weekday;
-		close $FILE;
+	##
+	##  Store the current reminder schedule
+	##
+	my ( $enabled, $hour, $minute, $weekday, $crontab) = readScheduledReminder();
+	open( my $FILE, '>', 'reminderSchedule.txt') || die "Couldn't save reminder schedule! $!\n";
+	printf $FILE "%d %02d:%02d  %s\n", $enabled, $hour, $minute, $weekday;
+	close $FILE;
 
-		print "Making a backup!\n";
-		$tar->add_files( $DBFilename, $Messaging::ConfigName, 'reminderSchedule.txt');
-		my $tarData = $tar->write();
+	print "Making a backup!\n";
+	print "Backing up $DBFilename, $Common::CS_Config::ConfigName, 'reminderSchedule.txt'\n";
+	$tar->add_files( $DBFilename, $Common::CS_Config::ConfigName, 'reminderSchedule.txt');
+	my $tarData = $tar->write();
 
-		my $pgp = Crypt::OpenPGP->new( Compat => 'GnuPG');
-		my $encrypted = $pgp->encrypt( Data => $tarData, Passphrase => 'TryToBeTimely');
-		open( my $PBT, '>', 'public/dataBackup.pbt');
-		binmode( $PBT);
-		syswrite( $PBT, $encrypted);
-		close( $PBT);
+	my $pgp = Crypt::OpenPGP->new( Compat => 'GnuPG');
+	my $encrypted = $pgp->encrypt( Data => $tarData, Passphrase => $passphrase);
+	open( my $PBT, '>', "public/$baseBackupFilename");
+	binmode( $PBT);
+	syswrite( $PBT, $encrypted);
+	close( $PBT);
 
-		unlink( 'reminderSchedule.txt');
-		return( 'dataBackup.pbt');
+	unlink( 'reminderSchedule.txt');
+	return( $baseBackupFilename);
 }
 
 

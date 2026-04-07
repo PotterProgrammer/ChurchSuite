@@ -19,7 +19,7 @@ use utf8::all;
 use Data::Dumper;
 
 
-my $DBFilename;
+our $DBFilename;
 my $dbh;
 
 #------------------------------------------------------------------------------

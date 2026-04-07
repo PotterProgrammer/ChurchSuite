@@ -5,7 +5,7 @@ package Common::CS_Contact;
 
 require Exporter;
 @ISA = qw( Exporter);
-@EXPORT = qw( sendEmail sendSMSTwilio);
+@EXPORT = qw( sendEmail sendSMSTwilio makeTwilioAutoCall);
 
 use warnings;
 use strict;
@@ -37,6 +37,7 @@ my $HOME = $ENV{'HOME'};
 #------------------------------------------------------------------------------
 sub sendEmail(@)
 {
+	my $rc = 1;
 	my ( $to, $from, $subj, $message, @attachments) = @_;
 
 	my %config = getConfigInfo();
@@ -47,32 +48,37 @@ sub sendEmail(@)
 														  -pass=>$config{EmailPWD}
 													    );
 
-	print STDERR "Can't get mail connection!! $error" if ( defined( $error) && length( $error));
-
-	
-	if ( @attachments)
+	if ( defined( $error) && length( $error))
 	{
-		my $filenames = join( ',', @attachments);
-
-		$mailer->send( -to => $to,
-					   -subject => $subj,
-					   -from => $from, 
-					   -contenttype => "text/html",
-					   -body => $message,
-					   -attachments => $filenames,
-					   -disposition => "inline",
-					 );
+		print STDERR "Can't get mail connection!! $error";
 	}
 	else
 	{
-		$mailer->send( -to => $to,
-					   -subject => $subj,
-					   -from => $from,
-					   -contenttype => "text/html",
-					   -body => $message,
-					 );
+		if ( @attachments)
+		{
+			my $filenames = join( ',', @attachments);
+
+			$mailer->send( -to => $to,
+						   -subject => $subj,
+						   -from => $from, 
+						   -contenttype => "text/html",
+						   -body => $message,
+						   -attachments => $filenames,
+						   -disposition => "inline",
+						 );
+		}
+		else
+		{
+			$mailer->send( -to => $to,
+						   -subject => $subj,
+						   -from => $from,
+						   -contenttype => "text/html",
+						   -body => $message,
+						 );
+		}
+		$mailer->bye;
+		$rc = 0;
 	}
-	$mailer->bye;
 }
 
 #------------------------------------------------------------------------------
@@ -156,7 +162,7 @@ sub sendSMSTwilio($$)
 #------------------------------------------------------------------------------
 #  sub makeTwilioAutoCall( $phoneNumber, $message)
 #  		This function calls the indicated phone number and reads the message
-#  		provided.
+#  		provided.  The function returns zero if successful.
 #------------------------------------------------------------------------------
 sub makeTwilioAutoCall($$)
 {
@@ -182,7 +188,7 @@ sub makeTwilioAutoCall($$)
  $twr->Say( {voice => "$gender"}, "Good-bye...");
 
  my $msg = uri_escape( $tw->to_string);
- my $twilio = WWW::Twilio::API->new(AccountSid  => $config{TwilioAccount},
+ my $twilio = WWW::Twilio::API->new(AccountSid  => $config{TwilioAcct},
 									AuthToken   => $config{TwilioAuth},
 									API_VERSION => '2010-04-01' );
 
@@ -198,7 +204,7 @@ sub makeTwilioAutoCall($$)
  print "Response is: $response->{content}\n\n$response->{message}\n";
  if ( $response->{code} != 201)
  	{
-	 logCall( "Call not placed!",  "Twilio said: " . $response->{code} . ':' .$response->{message}. "\n" . $response->{content});
+	 print( "Call not placed!",  "Twilio said: " . $response->{code} . ':' .$response->{message}. "\n" . $response->{content});
 	 return 1;
 	}
  $response->{content} =~ m/<Sid>(.*?)<\/Sid>.*<Status>(.*?)<\/Status>/i;

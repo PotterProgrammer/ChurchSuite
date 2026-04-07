@@ -32,27 +32,29 @@
 			<tr><td class="cfgLeft"><label for="TwilioAuth">TwilioAuth:</label></td><td><input type="text" id="TwilioAuth" name="TwilioAuth" value="<%= $TwilioAuth %>"  title="Twilio authorization code" class="cfginput"><br></td></tr>
 			<tr><td class="cfgLeft"><label for="TwilioPhone">TwilioPhone:</label></td><td><input type="tel" id="TwilioPhone" name="TwilioPhone" value="<%== $TwilioPhone %>"  title="Registered Twilio phone number that messages are sent from." class="cfginput"><br></td></tr>
 			<tr><td class="cfgLeft"><label for="TwilioIntro">TwilioIntro:</label></td><td><input type="tel" id="TwilioIntro" name="TwilioIntro" value="<%== $TwilioIntro %>"  title="Introductory message for automated phone call. (e.g.  This is a message from the St. James phone tree.)" class="cfginput"><br></td></tr>
-			<tr><td class="cfgLeft"><label for="TwilioGender">TwilioGender:</label></td><td><select  id="TwilioGender" name="TwilioGender" value="<%== $TwilioGender %>"  title="Gender for automated voice used when voice messages are sent." class="cfgselect"><option value="Male">Male</option><option value="Female">Female</option></select></td></tr>
-			<tr><td class="cfgLeft">Logging:</td><td><select name="Logging" title="Logging" class="cfgselect"><option value="N" <%= ($Logging==0) ? 'selected' : ''%>>N</option><option value="Y" <%= ($Logging==1)? 'selected' : '' %>>Y</option><br></td></tr>
-			<tr><td class="cfgLeft">MaxRetries:</td><td><input type="number" name="MaxRetries" value="<%= $MaxRetries %>" min=0 max=10 title="Maximum number of times to retry sending a message before giving up." class="cfginput"><br></td></tr>
-			<tr><td class="cfgLeft">DelayBetweenRetries:</td><td><input type="number" name="DelayBetweenRetries" value="<%= $DelayBetweenRetries %>" min=0 max=120 title="Number of seconds to wait before attempting to retry sending a message." class="cfginput"><br></td></tr>
-			<tr><td class="cfgLeft">CallerIDNumber:</td><td><input type="tel" name="CallerIDNumber" value="<%= $CallerIDNumber %>"  title="This is the number displayed on caller ID. (Must be a verified number.)" class="cfginput"><br></td></tr>
-
-			<tr><td class="cfgHead"><b>Administrator Contact Info:</b></td></tr>
-			<tr><td class="cfgLeft"><label for="AdminName">Admin Name:</label></td><td><input type="text" id="AdminName" name="AdminName" value="<%= $AdminName %>"  title="This is the name of the schedule administrator." class="cfginput"><br></td></tr>
-			<tr><td class="cfgLeft"><label for="AdminEmail">Admin Email:</label></td><td><input type="email" id="AdminEmail" name="AdminEmail" value="<%= $AdminEmail %>"  title="This is the phone number of the schedule administrator." class="cfginput"><br></td></tr>
-			<tr><td class="cfgLeft"><label for="AdminPhone">Admin Phone:</label></td><td><input type="text" id="AdminPhone" name="AdminPhone" value="<%= $AdminPhone %>"  title="This is the phone number of the schedule administrator." class="cfginput"><br></td></tr>
-			<tr><td class="cfgLeft"><label for="AdminText">Admin Text:</label></td><td><input type="text" id="AdminText" name="AdminText" value="<%= $AdminText %>"  title="This is the text number of the schedule administrator." class="cfginput"><br></td></tr>
+			<tr><td class="cfgLeft"><label for="TwilioGender">TwilioGender:</label></td><td><select  id="TwilioGender" name="TwilioGender" value="<%== $TwilioGender %>"  title="Gender for automated voice used when voice messages are sent." class="cfgselect">
+						<option value="Male" <%= ($TwilioGender eq 'Male') ? 'selected' : '' %> >Male</option>
+						<option value="Female" <%= ($TwilioGender eq 'Female') ? 'selected' : '' %> >Female</option>
+					</select></td></tr>
+			<tr><td class="cfgLeft"><label for="Logging">TwilioLogging:</label></td><td><select id="Logging" name="Logging" title="Logging" class="cfgselect">
+						<option value="N" <%= ($Logging==0) ? 'selected' : ''%>>N</option>
+						<option value="Y" <%= ($Logging==1)? 'selected' : '' %>>Y</option>
+					</select><br></td></tr>
+			<tr><td class="cfgLeft"><label for="MaxRetries">MaxRetries:</label></td><td><input id="MaxRetries" type="number" name="MaxRetries" value="<%= $MaxRetries %>" min=0 max=10 title="Maximum number of times to retry sending a message before giving up." class="cfginput"><br></td></tr>
+			<tr><td class="cfgLeft"><label for="DelayBetweenRetries">DelayBetweenRetries:</label></td><td><input type="number" id="DelayBetweenRetries" name="DelayBetweenRetries" value="<%= $DelayBetweenRetries %>" min=0 max=120 title="Number of seconds to wait before attempting to retry sending a message." class="cfginput"><br></td></tr>
+			<tr><td class="cfgLeft"><label for="CallerIDNumber">CallerIDNumber:</label></td><td><input type="tel" id = "CallerIDNumber" name="CallerIDNumber" value="<%= $CallerIDNumber %>"  title="This is the number displayed on caller ID. (Must be a verified number.)" class="cfginput"><br></td></tr>
 
 			<tr><td class="cfgHead"><b>Administrator Login Info:</b></td></tr>
-			<tr><td class="cfgLeft"><label for="AdminLogin">Admin Login Name:</label></td><td><input type="text" id="AdminLogin" name="AdminLogin" value="<%= $AdminLogin %>"  title="This is the login ID of the schedule administrator." class="cfginput"><br></td></tr>
-			<tr><td class="cfgLeft"><label for="AdminPWD">Admin Password:</label></td><td><input type="text" id="AdminPWD" name="AdminPWD" value="<%= $AdminPWD %>"  title="This is the login password of the schedule administrator." class="cfginput"><br></td></tr>
+			<tr><td class="cfgLeft"><label for="PhoneTreeAdminLogin">Admin Login Name:</label></td><td><input type="text" id="PhoneTreeAdminLogin" name="PhoneTreeAdminLogin" value="<%= $PhoneTreeAdminLogin %>"  title="This is the login ID of the schedule administrator." class="cfginput"><br></td></tr>
+			<tr><td class="cfgLeft"><label for="PhoneTreeAdminPWD">Admin Password:</label></td><td><input type="text" id="PhoneTreeAdminPWD" name="PhoneTreeAdminPWD" value="<%= $PhoneTreeAdminPWD %>"  title="This is the login password of the schedule administrator." class="cfginput"><br></td></tr>
 			</table>
 
 			<div id="buttonRow">
 				<input type="submit" name="submit" id="submitbtn" class="submitbtn" value="Save">
 				<input type="submit" formnovalidate name="submit" id="resetbtn" class="resetbtn" value="Cancel">
 			</div>
+			<br>
+			<br>
 		</div>
 	</form>
   </section>

@@ -282,6 +282,43 @@ nav ul li a:hover
 	width: 15em;
 }
 
+.loginForm
+{
+	margin-left:auto;
+	margin-right:auto;
+	margin-top:5%;
+	line-height: 250%;
+	text-align: center;
+}
+
+.buttonRow
+{
+	padding-top:  3vh;
+	margin-left: auto;
+	margin-right: auto;
+	display: flex;
+	justify-content: space-evenly;
+}
+
+.twoButtons 
+{
+	width: 23em;
+}
+
+
+.buttonRow.twoButtons input
+{
+	padding-left: 2em;
+	padding-right: 2em;
+}
+
+.buttonRow button
+{
+	padding-left: 1em;
+	padding-right: 1em;
+}
+
+
 TheTitle
 {
    color: white;
@@ -491,6 +528,35 @@ fauxbutton
     display: block;
     visibility: hidden;
     z-index: 3;
+}
+
+.selectSendTime
+{
+	display:grid;
+	grid-template-columns: 1fr 3em 1fr;
+	justify-items: center;
+	align-items: center;
+	margin-bottom: 1em;
+	font-size:14pt;
+}
+
+.downSome
+{
+	margin-top: .3em;
+}
+.gridLeftAlign
+{
+	justify-self: left;
+}
+
+.gridRightAlign
+{
+	justify-self: right;
+}
+
+.invisible
+{
+	display: none;
 }
 
 #pickPhoto

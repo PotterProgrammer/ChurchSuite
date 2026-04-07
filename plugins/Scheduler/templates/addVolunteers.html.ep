@@ -124,7 +124,15 @@
 			return;
 		}
 
-		fetch( '/scheduler/modifyVolunteer' ,
+		let destination = '/scheduler/modifyVolunteer';
+		% if ( $userMode)
+		% {	
+			let user = encodeURIComponent( "<%= $name %>");
+			destination = destination + "?user=" + user + "&UID=<%= $id %>";
+		% }
+
+
+		fetch( destination ,
 				{
 					method: "POST",
 					body: JSON.stringify( { 'originalName': originalName, 'info': volunteer}),

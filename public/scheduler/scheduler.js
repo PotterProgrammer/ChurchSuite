@@ -380,15 +380,19 @@ function makeABackup()
 		ws.send( "Backup");
 	};
 
-	ws.onmessage = function (evt)
+	ws.onmessage = async function (evt)
 	{
 		var data = evt.data;
+		const response = await fetch( "/" + data);
+		const blob = await response.blob();
+
 		var anchor = document.createElement('a');
-		anchor.href = "/" + data;
+		anchor.href = window.URL.createObjectURL( blob);
 		anchor.download = data;
-		document.body.appendChild( anchor);
 		anchor.click();
-		document.body.removeChild( anchor);
+		anchor.remove();
+		window.location.href = "/scheduler/cleanBackup";
+
 	}
 }
 

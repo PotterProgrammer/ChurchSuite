@@ -17,9 +17,9 @@ use utf8;
 use utf8::all;
 
 use Data::Dumper;
+use PhoneTree::Members;
 
 
-my $DBFilename;
 my $dbh;
 
 #------------------------------------------------------------------------------
@@ -36,6 +36,7 @@ sub initDB()
 					fromWho	text,
 					subject	text,
 					message	text,
+					sendOn  text,
 					status	text,
 					retryCount integer not null default 0
 				)'
@@ -52,7 +53,7 @@ sub openDB()
 {
 	if ( !defined( $dbh))
 	{
-		$dbh = DBI->connect( "dbi:SQLite:$DBFilename", "", "", {AutoCommit =>1}) or die "Sorry, couldn't open PhoneTree database!\n";
+		$dbh = DBI->connect( "dbi:SQLite:${PhoneTree::Members::DBFilename}", "", "", {AutoCommit =>1}) or die "Sorry, couldn't open PhoneTree database!\n";
 		$dbh->{sqlite_unicode} = 1;
 	}
 }
@@ -71,23 +72,31 @@ sub closeDB()
 }
 
 #------------------------------------------------------------------------------
-#  sub storeMessage( $to, $from, $subject, $message)
-#  		This function stores a message to a member for later transmission.
-#  		Note that $to is the member ID number, not a name.
+#  sub storeMessage( $to, $from, $subject, $message,[ $sendOn])
+#  		This function stores a message to a member for later transmission.  If
+#  		the "sendOn" date is not provided (as an ISO Datetime string), the
+#  		current datetime is used. Note that $to is the member ID number, not a
+#  		name.
 #------------------------------------------------------------------------------
-sub storeMessage($$$$)
+sub storeMessage(@)
 {
-	my ( $to, $from, $subject, $message) = @_;
+	my ( $to, $from, $subject, $message, $sendOn) = @_;
 	my $rc = 1;
+	if ( !defined( $sendOn))
+	{
+		my ($sec,$min,$hour,$mday,$mon,$year,$wday,$yday,$isdst) = localtime(time);
+		$sendOn = sprintf( "%04d-%02d-%02d %02d:%02d:%02d.000", $year + 1900, $mon + 1, $mday, $hour, $min, $sec);
+	}
 
 	openDB();
 
-	my $sth = $dbh->prepare( "insert into Messages ( sendTo, fromWho, subject, message, status, retryCount) values (?,?,?,?, 'Pending', 0)");
+	my $sth = $dbh->prepare( "insert into Messages ( sendTo, fromWho, subject, message, sendOn, status, retryCount) values (?,?,?,?,?, 'Pending', 0)");
 
 	$sth->bind_param( 1, $to);
 	$sth->bind_param( 2, $from);
 	$sth->bind_param( 3, $subject);
 	$sth->bind_param( 4, $message);
+	$sth->bind_param( 5, $sendOn);
 
 	$sth->execute();
 
@@ -111,7 +120,7 @@ sub pendingMessages()
 {
 	openDB();
 
-	my $memberList = $dbh->selectall_arrayref( "select rowid, * from Messages where status = 'Pending'", {Slice => {}});
+	my $memberList = $dbh->selectall_arrayref( "select rowid, * from Messages where status = 'Pending' and sendOn <= datetime('now', 'localtime')", {Slice => {}});
 
 	closeDB();
 	return $memberList;
@@ -126,7 +135,7 @@ sub messagesArePending()
 {
 	openDB();
 
-	my $countList = $dbh->selectall_arrayref( "select count(*) from Messages where status = 'Pending' or status = 'Sending'");
+	my $countList = $dbh->selectall_arrayref( "select count(*) from Messages where sendOn <= datetime('now', 'localtime') and (status = 'Pending' or status = 'Sending')");
 
 	closeDB();
 	return $countList->[0]->[0];
@@ -211,7 +220,6 @@ sub purgeSentMessages()
 #------------------------------------------------------------------------------
 BEGIN
 {
-	$DBFilename = "./phonetree.db";
 	initDB();
 }
 

@@ -6,6 +6,54 @@
 </head>
 
 <script src="/common/loadNav.js"> </script>
+<script src="/common/Dialog.js"></script>
+
+<script>
+
+	function verifyConfigOverwrite()
+	{
+		let message = 'The backup file contains configuration settings for email or texting that are different than the current settings.<br>Do you wish to use the settings from the backup file?'
+
+		Dialog.Confirm( {text: message, title: "Caution:"}).then( (answer) =>
+			{
+				if ( answer)
+				{
+					fetch( '/directory/restoreCommon',
+							{
+								method: "POST",
+								body: JSON.stringify( { 'backupName': '<%= $backupFile %>'}),
+								headers: { "Content-type": "application/json"}
+							}
+						  )
+					.then( response => 
+							{
+								window.location.href = 'admin';
+							});
+				}
+				else
+				{
+					fetch( '/directory/releaseBackupData',
+							{
+								method: "POST",
+								body: JSON.stringify( { 'backupName': '<%= $backupFile %>'}),
+								headers: { "Content-type": "application/json"}
+							}
+						  )
+					.then( response => 
+							{
+								window.location.href = 'admin';
+							});
+				}
+			});
+	}
+
+
+% if ( defined( stash( 'backupFile')))
+% {	
+	window.addEventListener( "pageshow", function () {verifyConfigOverwrite();} );
+% }
+
+</script>
 
 
 <body>

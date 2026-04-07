@@ -1,0 +1,411 @@
+<html>
+
+<head>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+  <link rel="stylesheet" href="/phonetree/site.css">
+</head>
+
+<script src="/common/Dialog.js"></script>
+<script src="/common/loadNav.js"></script>
+<script src="/common/PhoneTree.js"></script>
+
+<script>
+
+let contactList = new Map();
+
+//==============================================================================
+//  function refreshGroupList()
+//==============================================================================
+function refreshGroupList()
+{
+	redrawGroupList( "groups", () => {multiSelectWithoutCtrl( 'multiSel')}, groupSelected);
+}
+
+//==============================================================================
+//  function refreshContactsList()
+//  	This function refreshes the list of contact names.
+//==============================================================================
+function refreshContactsList()
+{
+	let select = document.getElementById( 'individuals');
+
+	//
+	//  First clear the list
+	//
+	while( select.options.length > 0)
+	{
+		select.remove(0);
+	}
+
+	readContactList()
+		.then(( list) =>
+			{
+				let select = document.getElementById( 'individuals');
+
+				list.forEach( (row) =>
+					{
+						let option = new Option( row.firstname + " " + row.lastname, row.rowid);
+						option.className = "multiSel";
+						option.setAttribute( "type", "member");
+						option.addEventListener( 'click', () => {clickedContact( option)});
+						select.add( option);
+					});
+
+				multiSelectWithoutCtrl('multiSel');
+			});
+}
+
+//==============================================================================
+//  function clickedContact( item)
+//		This function is called whenever a contact is clicked.  It either sets
+//		the entry in contactList to 1 (if it is not currently set) or removes
+//		it from the list.
+//==============================================================================
+function clickedContact( item)
+{
+	if ( contactList.has( Number(item.value)))
+	{
+		contactList.delete( item.value);
+	}
+	else
+	{
+		contactList.set( Number(item.value), 1);
+	}
+}
+
+//==============================================================================
+//  function clearContacts()
+//		This function clears the checkboxes in all entries in the contact list,
+//		and clears all entries in the groups list.
+//==============================================================================
+function clearContacts()
+{
+	unSelectAllItems( 'individuals');
+	unSelectAllItems( 'groups');
+	contactList.clear();
+}
+
+//==============================================================================
+//  function selectAllContacts()
+//		This function sets the checkboxes in all entries in the contact list,
+//		and clears all entries in the groups list.
+//==============================================================================
+function selectAllContacts()
+{
+	unSelectAllItems( 'groups');
+	let list = document.getElementById( 'individuals');
+	for( let option of list.options)
+	{
+		option.selected = true;
+		contactList.set( Number(option.value), 1);
+	}
+}
+
+//==============================================================================
+//  function groupSelected( item)
+//		This function is called whenever a group is selected (checked or unchecked).
+//==============================================================================
+function groupSelected( item)
+{
+	//
+	//  Get a list of members in this group
+	//
+	if ( item.selected)
+	{
+		//
+		//  Select each name in the list (and increment
+		//  occurrence count in the memberList)
+		//
+		updateContactList( item.value, 1);
+	}
+	else
+	{
+		//
+		//  Unselect each name in the list (and increment
+		//  occurrence count in the memberList)
+		//
+		updateContactList( item.value, -1);
+	}
+}
+
+//==============================================================================
+//  function updateContactList( groupName, adjustByAmount)
+//		This function is called whenever a group is selected or unselected.  It
+//		returns a Promise.  It retrieves the members of the group (which may
+//		include other groups) and then iterates through the list.  It adjusts
+//		the value for the member in the contactList by the adjustByAmount.  If
+//		the value is positive, it selects the corresponding entry in the list
+//		of individuals.  If the value is zero, then the corresponding name is
+//		unselected and the entry is removed from the contactList map.
+//==============================================================================
+function updateContactList( groupName, adjustByAmount)
+{
+	return new Promise((resolve, reject) =>
+		{
+			readGroupMemberList( groupName)
+				.then( (list) =>
+					{
+						let select = document.getElementById( 'groupMembers');
+
+						list.forEach( (row) =>
+							{
+								let name = row.memberName;
+								let id = row.id;
+								let isGroup = (row.isGroup == 1);
+								
+								//
+								//  Is this member a group?
+								//
+								if ( !isGroup)
+								{
+									if ( contactList.has( id))
+									{
+										contactList.set( id, contactList.get(id) + adjustByAmount);
+
+										if ( contactList.get( id) <= 0)
+										{
+											contactList.delete( id);
+										}
+										document.querySelector( `.individuals option[value="${id}"]`).selected = contactList.has( id);
+									}
+									else
+									{
+										if ( adjustByAmount > 0)
+										{
+											contactList.set( id, 1);
+											document.querySelector( `.individuals option[value="${id}"]`).selected = true;
+										}
+									}
+
+								}
+								else
+								{
+									//
+									//  If this member is itself a group, process those member names as well...
+									//
+									updateContactList( name, adjustByAmount);
+								}
+							});
+
+					});
+		
+				resolve();
+			}
+		);
+}
+
+
+//==============================================================================
+//  function timeChanged()
+//		This function is called whenever one of the time components (hour, min,
+//		AM/PM) is called.  It calculates the newly set time value and stores it
+//		in the "whenToSend" element in the form.
+//==============================================================================
+function timeChanged()
+{
+	let hour = document.getElementById("hourToSend").value;
+	let minute = document.getElementById("minuteToSend").value;
+	let amPm = document.getElementById("AMPM").value;
+	let date = document.getElementById( "dateToSend").value;
+
+	if ( amPm === "PM")
+	{
+		//
+		//  If hour is less than 12, add 12
+		//  make sure there is a leading zero.
+		//
+		if ( hour < '12')
+		{
+			hour = String( parseInt(hour,10) + 12);
+		}
+	}
+	else
+	{
+		if ( hour == '12')
+		{
+			hour = '00';
+		}
+	}
+
+	let timeString = `${date} ${hour}:${minute}:00`;
+	let whenToSend = document.getElementById( 'whenToSend');
+	whenToSend.value = timeString;
+}
+
+//==============================================================================
+//  function setToday()
+//		Function to set the date field to have a default value of today (+ 1 hour)
+//==============================================================================
+function setToday()
+{
+	//
+	//  Get the current date
+	//
+	let now = new Date();
+	now = new Date( now.getTime() + 3600000);  // Bump the date by 1 hour (in ms)
+
+	//
+	//  Adjust the date for the timezone shift, and then get the date in ISO format
+	//
+	dateNow = new Date( now.getTime() - (now.getTimezoneOffset()*60000)).toISOString().split('T')[0];
+
+	let sendDate = document.getElementById( 'dateToSend');
+	sendDate.value = dateNow;
+	sendDate.min = dateNow;
+	
+	let sendHour = document.getElementById( 'hourToSend');
+	let amPm = document.getElementById( 'AMPM');
+
+	let hourString = String( now.getHours() % 12).padStart( 2, '0');
+	if ( now.getHours() == 0)
+	{
+		hourString = "12";
+	}
+	sendHour.value = hourString;
+
+	if ( now.getHours() > 11)
+	{
+		amPm.value = "PM";
+	}
+	timeChanged();
+}
+
+//
+//  Set the modified event handler for the member list once the page has loaded
+//
+window.addEventListener( "load", function ()
+	{
+		refreshGroupList();
+		refreshContactsList();
+	});
+
+//
+//  Set the 'dateToSend' field once the page has loaded
+//
+window.addEventListener( 'load',function()
+	{
+		setToday();
+	});
+
+</script>
+
+<body>
+	<div id="navbar">
+	</div>
+
+<h1>Schedule a One-Time Message</h1>
+
+<p id="instructions">
+	First, select the date and time when the message should be sent.  Then, 
+	select one or more individuals or groups that the message should be sent to.
+	Then, enter the message to be sent.  Note that the "<b>From</b>" and "<b>Subject</b>" entries
+	will only appear in emails that are sent.  Text and voice messages will include only the message.  When you are finished,
+	press the "<b>Send</b>" button.
+</p>
+
+<div class="selectSendTime">
+	<div class="gridRightAlign">
+		<label for="dateToSend">Send Message on: </label>
+		<input type="date" onchange="timeChanged()" id="dateToSend"></input>
+	</div>
+	<div>
+		<label for="hourToSend">at</label>
+	</div>
+	<div class="gridLeftAlign downSome">
+		<select name="hourToSend" onChange="timeChanged()" id="hourToSend">
+			<option value="01">01</option>
+			<option value="02">02</option>
+			<option value="03">03</option>
+			<option value="04">04</option>
+			<option value="05">05</option>
+			<option value="06">06</option>
+			<option value="07">07</option>
+			<option selected value="08">08</option>
+			<option value="09">09</option>
+			<option value="10">10</option>
+			<option value="11">11</option>
+			<option value="12">12</option>
+		</select>
+		:
+		<select name="minuteToSend" onChange="timeChanged()" id="minuteToSend">
+			<option value="00">00</option>
+			<option value="15">15</option>
+			<option value="30">30</option>
+			<option value="45">45</option>
+		</select>
+		<select name="AMPM" onChange="timeChanged()" id="AMPM">
+			<option value="AM" selected>AM</option>
+			<option value="PM">PM</option>
+		</select>
+	</div>
+</div>
+<div class="messageScreen">
+	<div class="groupCol showCheckBoxes">
+		<div>
+			<label for="groups">Groups:</label>
+			<p/>
+			<select name="groups" class="groups" id="groups" size="11" multiple>
+				<option value="Choir" class="multiSel" type="group">Choir</option>
+				<option value="SPR" class="multiSel" type="group">SPR</option>
+				<option value="Staff" class="multiSel" type="group">Staff</option>
+				<option value="Trustees" class="multiSel" type="group">Trustees</option>
+			</select>
+			<p/>
+			<!-- div>
+				<button onClick="selectAllItems( 'groups')">Select All</button>
+				<button onClick="unSelectAllItems( 'groups')">Select None</button>
+			</div -->
+		</div>
+	</div>
+	<form name="sendMessage" action="<%=url_for('sendMessage')->to_abs%>" method="post" style="display:contents;">
+		<input class="invisible" name="whenToSend" type="text" id="whenToSend"></input>
+		<div class="indivCol showCheckBoxes">
+			<div>
+				<label for="individuals">Individuals:</label>
+				<p/>
+				<select name="individuals" class="individuals" id="individuals" size="11" multiple>
+					<option value="Bob 41" class="multiSel" type="member">Bob</option>
+					<option value="Gus 41" class="multiSel" type="member">Gus</option>
+					<option value="Sam 41" class="multiSel" type="member">Sam</option>
+					<option value="Joe 41" class="multiSel" type="member">Joe</option>
+					<option value="Will 41" class="multiSel" type="member">William A. Stanley</option>
+				</select>
+				<p/>
+				<div>
+					<button onClick="selectAllContacts()">Select All</button>
+					<button onClick="clearContacts()">Select None</button>
+				</div>
+			</div>
+		</div>
+		<div class="messageCol">
+			<div class="messageWindow">
+				<div class="label1">
+					<label for="from">From:</label>
+				</div>
+				<div class="from">
+					<input type="text" name="from" id="name" placeholder="From (for email)">
+				</div>
+				<div class="label2">
+					<label for="subject">Subject:</label>
+				</div>
+				<div class="subject">
+					<input type="text" name="subject" id="subject" placeholder="Subject (for email)">
+				</div>
+				<div class="label3">
+					<label for="theMessage">Message:</label>
+				</div>
+				<div class="messageText">
+					<textarea name="theMessage" id="messageText" placeholder="Message to send"></textarea>
+				</div>
+				<div class="sendButton">
+					<input type="submit" value="Send Message"></input>
+				</div>
+			</div>
+		</div>
+	</form>
+</div>
+
+</body>
+</html>
+
+

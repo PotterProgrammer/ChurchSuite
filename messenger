@@ -22,9 +22,11 @@ my $threads = 4;	   ## Send up to 4 messages simultaneously
 my @procs;
 
 sub sendAMessage($);
+sub launch($$);
 
 #main:
 {
+	print "Messenger startup...\n";
 	for( 1..$threads)
 	{
 		push( @procs, Proc::Simple->new());
@@ -108,36 +110,39 @@ sub sendAMessage($)
 
 	my @sendList = grep {defined( $_)}( $userInfo->{tryFirst}, $userInfo->{trySecond}, $userInfo->{tryThird});
 	my $sent = 0;
+	my $sentEmail = 0;
+	my $sentSMS = 0;
+	my $sentAudio = 0;
 
 	print "Sending message to $userInfo->{firstname} $userInfo->{lastname}\n";
+	
 	##
 	##  Try sending the message
 	##
 	foreach my $method (@sendList)
 	{
-		if ( $method =~ /email/i)
+		if ( !$sentEmail && ( $method =~ /email/i))
 		{
-			my $rc = !print( " sendEmail( $userInfo->{email}, $from, $subject, $message)\n");
-			sleep 5;
-##-->			my $rc = sendEmail( $userInfo->{email}, $from, $subject, $message);
+			print "Sending email...\n";
+			my $rc = sendEmail( $userInfo->{email}, $from, $subject, $message);
 			$sent = !$rc;
+			$sentEmail = $sent;
 		}
 
-		if ( $method =~ /text/i)
+		if ( !$sentSMS && ( $method =~ /text/i))
 		{
-			my $rc = !print( "sendSMSTwilio( $userInfo->{cell}, $message)\n");
-			sleep 5;
-##-->			my $rc = sendSMSTwilio( $userInfo->{cell}, $message);
+			print "Sending text...\n";
+			my $rc = sendSMSTwilio( $userInfo->{cell}, $message);
 			$sent = !$rc;
+			$sentSMS = $sent;
 		}
 
-		if ( $method =~ /phone/i)
+		if ( !$sentAudio && ( $method =~ /phone/i))
 		{
-			my $rc = !print( "makeTwilioAutoCall( $userInfo->{homephone}, $message)\n");
-			sleep 5;
-			$rc =1;
-##-->			my $rc = makeTwilioAutoCall( $userInfo->{homephone}, $message)
+			print "Calling on the phone...\n";
+			my $rc = makeTwilioAutoCall( $userInfo->{homephone}, $message);
 			$sent = !$rc;
+			$sentAudio = $sent;
 		}
 
 		##
@@ -153,7 +158,7 @@ sub sendAMessage($)
 	##
 	##  Was the message sent?
 	##
-	if ( $sent)
+	if ( $sentEmail || $sentSMS || $sentAudio)
 	{
 		setMessageStatus( $rowId, "Sent");
 	}

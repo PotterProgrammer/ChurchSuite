@@ -19,7 +19,8 @@ use utf8::all;
 use Data::Dumper;
 
 
-my $DBFilename;
+our $DBFilename = "./phonetree.db";
+
 my $dbh;
 
 #------------------------------------------------------------------------------

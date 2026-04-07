@@ -1,7 +1,7 @@
 ##
 ##  Module to save/restore scheduling information
 ##
-package Directory::BackupRestore;
+package PhoneTree::BackupRestore;
 
 require Exporter;
 @ISA = qw( Exporter);
@@ -20,9 +20,9 @@ use utf8::all;
 
 use Archive::Tar;
 use Crypt::OpenPGP;
-use Directory::Members;
+use PhoneTree::Members;
 
-our $baseBackupFilename = 'directoryBackup.pbt';
+our $baseBackupFilename = 'phoneTreeBackup.pbt';
 
 #------------------------------------------------------------------------------
 #  sub backupData( $passphrase)
@@ -39,9 +39,10 @@ sub backupData($)
 	##
 	unlink( "public/$baseBackupFilename");
 
-	print "Making a backup!\n";
-	print "Adding:\n\t". join("\n\t",( $Directory::Members::DBFilename, $Common::CS_Config::ConfigName, glob( "./public/directory/Photos/*"))) . "\n";
-	$tar->add_files( $Directory::Members::DBFilename, $Common::CS_Config::ConfigName, glob( "./public/directory/Photos/*"));
+##-->	print "Making a backup!\n";
+##-->	print "Adding $PhoneTree::Members::DBFilename and  $Common::CS_Config::ConfigName\n";
+
+	$tar->add_files( $PhoneTree::Members::DBFilename, $Common::CS_Config::ConfigName);
 	my $tarData = $tar->write();
 
 	my $pgp = Crypt::OpenPGP->new( Compat => 'GnuPG');
@@ -66,7 +67,7 @@ sub restoreBackup($$)
 	my $size = $filename->size;
 	my $name = $filename->filename;
 	my %response;
-	unlink( "directoryBackup.tar");
+	unlink( "phoneTreeBackup.tar");
 
 	##
 	##  Decrypt the file data
@@ -74,7 +75,7 @@ sub restoreBackup($$)
 	my $pgp = Crypt::OpenPGP->new;
 	my $backupData = $filename->asset->slurp;
 
-	my ($restoreResult, $backupFilename) = restoreBackupData( $backupData, $passphrase, 'Directory', ());
+	my ($restoreResult, $backupFilename) = restoreBackupData( $backupData, $passphrase, 'PhoneTree', ());
 
 	if ( $restoreResult eq 'Success')
 	{
@@ -85,45 +86,8 @@ sub restoreBackup($$)
 		%response = ( textMessage => $restoreResult, backupFile=> $backupFilename, title=>'Warning!', showFor=>5000);
 	}
 
-##-->	my $backupData = $pgp->decrypt( Data => $encrypted, Passphrase => $passphrase);
-##-->
-##-->	if ( defined ( $backupData))
-##-->	{
-##-->		open( my $TAR, '>', "directoryBackup.tar");
-##-->		binmode( $TAR);
-##-->		syswrite( $TAR, $backupData);
-##-->		close( $TAR);
-##-->
-##-->		my $tar = Archive::Tar->new();
-##-->		$Archive::Tar::INSECURE_EXTRACT_MODE = 1;
-##-->		if ( $tar->read( 'directoryBackup.tar'))
-##-->		{
-##-->			if ($tar->extract())
-##-->			{
-##-->				%response = ( textMessage => "Restore completed!", title=>'Success', showFor=>5000);
-##-->				print "\n\n\n\nRestored!!!\n\n\n";
-##-->			}
-##-->			else
-##-->			{
-##-->				%response = ( textMessage => "Unable to read backup file contents!", title=>'Warning!', showFor=>5000);
-##-->				print "\n\n\n\nRead error!!!\n\n\n";
-##-->			}
-##-->		}
-##-->		else
-##-->		{
-##-->			%response = ( textMessage => "Unable to read backup file!", title=>'Warning!', showFor=>5000);
-##-->			print "\n\n\n\nTar read error!!!\n\n\n";
-##-->		}
-##-->
-##-->		unlink( 'directoryBackup.tar');
-##-->	}
-##-->	else
-##-->	{
-##-->		%response = ( textMessage => "Unable to read provided backup file!", title=>'Warning!', showFor=>5000);
-##-->		print "\n\n\n\nDecryption read error dude!!!\n\n\n";
-##-->	}
-
 	return %response;
 }
 
 1;
+

@@ -13,3 +13,6 @@ my_crontab
 sync*
 *.cfg
 resetPwdTest
+*.pbj
+*.pbt
+*.tar
