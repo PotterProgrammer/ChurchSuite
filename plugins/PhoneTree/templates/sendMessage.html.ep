@@ -1,3 +1,4 @@
+<!DOCTYPE html>
 <html>
 
 <head>
@@ -12,6 +13,7 @@
 <script>
 
 let contactList = new Map();
+let selectedOptions = new Array();
 
 //==============================================================================
 //  function refreshGroupList()
@@ -19,6 +21,8 @@ let contactList = new Map();
 function refreshGroupList()
 {
 	redrawGroupList( "groups", () => {multiSelectWithoutCtrl( 'multiSel')}, groupSelected);
+	let groupList = document.getElementById( "groups");
+	groupList.addEventListener( "change", (event) => {handleGroupChange(event)});
 }
 
 //==============================================================================
@@ -82,6 +86,7 @@ function clearContacts()
 {
 	unSelectAllItems( 'individuals');
 	unSelectAllItems( 'groups');
+	selectedOptions.length = 0;
 	contactList.clear();
 }
 
@@ -93,6 +98,7 @@ function clearContacts()
 function selectAllContacts()
 {
 	unSelectAllItems( 'groups');
+	selectedOptions.length = 0;
 	let list = document.getElementById( 'individuals');
 	for( let option of list.options)
 	{
@@ -104,6 +110,7 @@ function selectAllContacts()
 //==============================================================================
 //  function groupSelected( item)
 //		This function is called whenever a group is selected (checked or unchecked).
+//		This usually fires only on desktop browsers.
 //==============================================================================
 function groupSelected( item)
 {
@@ -126,6 +133,46 @@ function groupSelected( item)
 		//
 		updateContactList( item.value, -1);
 	}
+}
+
+
+//==============================================================================
+//  function handleGroupChange( theEvent)
+//		This function is called when the "Groups" select object changes.  (This
+//		usually happens only on a mobile device.)
+//==============================================================================
+function handleGroupChange( theEvent)
+{
+	let select = theEvent.target;
+
+	//
+	//  Get a list of all selected options
+	//
+	newSelectedOptions = Array.from(select.selectedOptions);
+
+	//
+	//  Find the option that is different between the new list and the old
+	//
+	const addedOption = newSelectedOptions.filter( x => !selectedOptions.includes(x));
+	const removedOption = selectedOptions.filter( x => !newSelectedOptions.includes(x));
+
+	if ( addedOption.length > 0)
+	{
+		//
+		//  Select each name in the list (and increment
+		//  occurrence count in the memberList)
+		//
+		updateContactList( addedOption[0].value, 1);
+	}
+	else
+	{
+		//
+		//  Unselect each name in the list (and increment
+		//  occurrence count in the memberList)
+		//
+		updateContactList( removedOption[0].value, -1);
+	}
+	selectedOptions = newSelectedOptions;
 }
 
 //==============================================================================
@@ -223,20 +270,16 @@ window.addEventListener( "load", function ()
 		<div>
 			<label for="groups">Groups:</label>
 			<p/>
-			<select name="groups" class="groups" id="groups" size="11" multiple>
+			<select name="groups" class="groups" id="groups" size="11" multiple> 
 				<option value="Choir" class="multiSel" type="group">Choir</option>
 				<option value="SPR" class="multiSel" type="group">SPR</option>
 				<option value="Staff" class="multiSel" type="group">Staff</option>
 				<option value="Trustees" class="multiSel" type="group">Trustees</option>
 			</select>
 			<p/>
-			<!-- div>
-				<button onClick="selectAllItems( 'groups')">Select All</button>
-				<button onClick="unSelectAllItems( 'groups')">Select None</button>
-			</div -->
 		</div>
 	</div>
-	<form name="sendMessage" action="<%=url_for('sendMessage')->to_abs%>" method="post" style="display:contents;">
+	<form name="sendMessage" action="<%=url_for('sendMessage')->to_abs%>" method="post" class="messageForm">
 		<div class="indivCol showCheckBoxes">
 			<div>
 				<label for="individuals">Individuals:</label>
@@ -250,8 +293,8 @@ window.addEventListener( "load", function ()
 				</select>
 				<p/>
 				<div>
-					<button onClick="selectAllContacts()">Select All</button>
-					<button onClick="clearContacts()">Select None</button>
+					<button type="button" onClick="selectAllContacts()">Select All</button>
+					<button type="button" onClick="clearContacts()">Select None</button>
 				</div>
 			</div>
 		</div>

@@ -14,6 +14,73 @@
 
 let contactList = new Map();
 let selectedOptions = new Array();
+let initialLoad = true;
+
+
+//==============================================================================
+//  function setRecipients()
+//  	This function sets the list of contact names selected by the user
+//==============================================================================
+function setRecipients()
+{
+	initialLoad = false;
+	let list = [ <%= join( ",", @$recipients) %> ];
+	let select = document.getElementById( 'individuals');
+
+	Array.from( select.options).forEach( (option) =>
+		{
+			option.selected = list.includes( Number(option.value));
+		});
+}
+
+//==============================================================================
+//  function setInitialMessage()
+//==============================================================================
+function setInitialMessage()
+{
+	let dateToSend = document.getElementById( 'dateToSend');
+	let hours = document.getElementById( 'hourToSend');
+	let minutes = document.getElementById( 'minuteToSend');
+	let dayOrNight = document.getElementById( 'AMPM');
+	let fromWho = document.getElementById('name');
+	let subject = document.getElementById('subject');
+	let message = document.getElementById('messageText');
+
+	let dateTime = '<%= $message->{sendOn} %>';
+	let dateParts = dateTime.split( ' ');
+	let timeParts = dateParts[1].split(':');
+	dateToSend.value = dateParts[0];
+
+	let amPm = "AM";
+	let hour = Number(timeParts[0]);
+	if (( hour == 0) || ( hour == 12))
+	{
+		hours.value = "12";
+	}
+	else
+	{	
+		hours.value = String( hour % 12).padStart( 2, '0');
+	}
+
+	if ( hour >= 12)
+	{
+		amPm = "PM";
+	}
+	minutes.value = timeParts[1];
+	dayOrNight.value = amPm;
+	timeChanged();
+	
+	%  my $x = $message->{fromWho};$x =~ s/'/\\'/g;
+	fromWho.value = '<%== $x %>';
+
+	%  $x = $message->{subject};$x =~ s/'/\\'/g;
+	subject.value = '<%== $x %>';
+
+	%  $x = $message->{message};$x =~ s/'/\\'/g;
+	message.value = '<%== $x %>';
+
+}
+
 
 //==============================================================================
 //  function refreshGroupList()
@@ -56,6 +123,11 @@ function refreshContactsList()
 					});
 
 				multiSelectWithoutCtrl('multiSel');
+
+				if ( initialLoad)
+				{
+					setRecipients();
+				}
 			});
 }
 
@@ -108,9 +180,24 @@ function selectAllContacts()
 }
 
 //==============================================================================
+//  function selectIndicatedContacts( contactIdList)
+//		This function selects every contact in the contact list which has an
+//		id in the contactIdList.
+//==============================================================================
+function selectIndicatedContacts( contactIdList)
+{
+	let contactList = document.getElementById( 'individuals');
+	let optionList = Array.from( contactList.options).find( option => contactIdList.includes(option));
+	for( let option of optionList)
+	{
+		option.selected = true;
+		contactList.set( Number(option.vale), 1);
+	}
+}
+
+//==============================================================================
 //  function groupSelected( item)
 //		This function is called whenever a group is selected (checked or unchecked).
-//		This usually fires only on desktop browsers.
 //==============================================================================
 function groupSelected( item)
 {
@@ -134,7 +221,6 @@ function groupSelected( item)
 		updateContactList( item.value, -1);
 	}
 }
-
 
 //==============================================================================
 //  function handleGroupChange( theEvent)
@@ -174,6 +260,7 @@ function handleGroupChange( theEvent)
 	}
 	selectedOptions = newSelectedOptions;
 }
+
 
 //==============================================================================
 //  function updateContactList( groupName, adjustByAmount)
@@ -324,15 +411,9 @@ window.addEventListener( "load", function ()
 	{
 		refreshGroupList();
 		refreshContactsList();
+		setInitialMessage();
 	});
 
-//
-//  Set the 'dateToSend' field once the page has loaded
-//
-window.addEventListener( 'load',function()
-	{
-		setToday();
-	});
 
 </script>
 
@@ -340,14 +421,14 @@ window.addEventListener( 'load',function()
 	<div id="navbar">
 	</div>
 
-<h1>Schedule a One-Time Message</h1>
+<h1>Reschedule a One-Time Message</h1>
 
 <p id="instructions">
-	First, select the date and time when the message should be sent.  Then, 
-	select one or more individuals or groups that the message should be sent to.
-	Then, enter the message to be sent.  Note that the "<b>From</b>" and "<b>Subject</b>" entries
-	will only appear in emails that are sent.  Text and voice messages will include only the message.  When you are finished,
-	press the "<b>Send</b>" button.
+	The fields below show the message that was originally scheduled.  You 
+	may change the message, the recipients of the message, and when it should be sent.
+	Then, enter the message to be sent. When you are finished,
+	press the "<b>Save Changes</b>" button, to schedule the message, or press "<b>Cancel</b>" to leave the original message in place.
+	Note that if you press "<b>Save Changes</b>" the original messages will deleted and replaced with the new message.
 </p>
 
 <div class="selectSendTime">
@@ -406,6 +487,7 @@ window.addEventListener( 'load',function()
 	</div>
 	<form name="sendMessage" action="<%=url_for('sendMessage')->to_abs%>" method="post" class="messageForm">
 		<input class="invisible" name="whenToSend" type="text" id="whenToSend"></input>
+		<input class="invisible" name="messageIds" id="messageIds" type="text" value="<%== $messageIds %>"></input>
 		<div class="indivCol showCheckBoxes">
 			<div>
 				<label for="individuals">Individuals:</label>
@@ -445,7 +527,8 @@ window.addEventListener( 'load',function()
 					<textarea name="theMessage" id="messageText" placeholder="Message to send"></textarea>
 				</div>
 				<div class="sendButton">
-					<input type="submit" value="Send Message"></input>
+					<input type="submit" value="Save Changes"></input>
+					<button type="button" onClick="window.location.href='index'">Cancel</button>
 				</div>
 			</div>
 		</div>

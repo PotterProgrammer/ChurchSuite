@@ -278,7 +278,7 @@ nav ul li a:hover
 .rightEdge
 {
 	left: calc( 99.25vw - 14.65em);
-;;-->	margin-top: 3px;
+/*	margin-top: 3px; */
 	width: 15em;
 }
 
@@ -637,6 +637,8 @@ adminNamesList
 {
     display: inline-block;
     margin-left: 5%;
+    margin-right: 5%;
+	margin-bottom: 2em;
 	font-size: 13pt;
 }
 
@@ -674,7 +676,6 @@ adminNamesList
 	background: #fff; 
 	border-radius: 6px; 
 	-webkit-border-radius: 6px; 
-	-moz-border-radius: 6px;
 	-webkit-box-sizing: border-box;
 	-moz-box-sizing: border-box; 
 	box-sizing: border-box;  
@@ -772,7 +773,6 @@ adminNamesList
 	padding-left: 25px;
 	color: #777;
 	box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1) inset;
-	-moz-box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1) inset;
 	-webkit-box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1) inset; 
 	transition: border 0.15s linear 0s, box-shadow 0.15s linear 0s, color 0.15s linear 0s;
 	-webkit-transition: border 0.15s linear 0s, box-shadow 0.15s linear 0s, color 0.15s linear 0s;
@@ -785,7 +785,6 @@ adminNamesList
 	color: #333;
 	border-color: rgba(41, 92, 161, 0.4);
 	box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1) inset, 0 0 8px rgba(41, 92, 161, 0.6);
-	-moz-box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1) inset, 0 0 8px rgba(41, 92, 161, 0.6);
 	-webkit-box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1) inset, 0 0 8px rgba(41, 92, 161, 0.6);
 	outline: 0 none; 
 }
@@ -908,11 +907,6 @@ adminNamesList
 	gap: 20px;
 }
 
-#instructions
-{
-	bottom-margin: 2em;
-}
-
 option
 {
 	font-family: Helvetica,Arial,sans-serif;
@@ -992,6 +986,11 @@ option[type="member"]
 	grid-row-start: 1;
 }
 
+.messageForm
+{
+	display: contents;
+}
+
 .messageWindow
 {
 	display: grid;
@@ -1066,8 +1065,214 @@ option[type="member"]
 .sendButton
 {
 	grid-column-start: 2;
-	grid-column-end: 3;
+	grid-column-end: 4;
 	grid-row-start: 5;
 	grid-row-end: 6;
 	justify-self:left;
+	width: 100%;
+}
+
+.sendbutton input
+{
+	width: 8em;
+	padding-top: .2em;
+	height: 1.7em;
+}
+
+.listHolder
+{
+	max-height: 50vh;
+	min-width: 60%;
+	max-width: 80%;
+	overflow: auto;
+	border: 1px solid white;
+	margin-left: auto;
+	margin-right: auto;
+}
+
+.listHolder table
+{
+	width: 100%;
+	border-collapse: collapse;
+	background-color: white;
+	color: black;
+	font-size: 1rem;
+}
+
+.listHolder thead th
+{
+	position: sticky;
+	top: 0;
+	background-color: #e0e0e0;
+	z-index: 1;
+	padding: 5px;
+	border-bottom: 2px solid black;
+	text-align: left;
+}
+
+.listHolder td
+{
+	padding-left: 5px;
+	padding-top: 5px;
+	padding-bottom: 5px;
+	padding-right: 1em;
+	border-bottom: 1px solid darkgray;
+font-size:1rem;
+}
+
+
+.listHolder td:nth-child(1)
+{
+	min-width: 20px;
+}
+.listHolder td:nth-child(2)
+{
+	min-width: 5em;
+}
+.listHolder td:nth-child(3)
+{
+	min-width: 10em;
+}
+.listHolder td:nth-child(4)
+{
+	max-width: 16em;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+.listHolder td:nth-child(5)
+{
+	overflow: hidden;
+	white-space: nowrap;
+	text-overflow: ellipsis;
+	max-width: 50em;
+}
+
+@media (max-width: 900px) {
+
+.messageScreen
+{
+  all: unset;
+  width: 98vw;
+  height: 15em;
+  display: grid;
+  grid-template-columns: 1fr;
+  column-gap: 1.5em;
+}
+
+.groupCol
+{
+  all: unset;
+}
+
+.showCheckBoxes
+{
+	margin-left: auto;
+	margin-right: auto;
+	width: 12em;
+}
+
+.messageForm
+{
+	all: unset;
+}
+
+.messageText textarea
+{
+	min-height: 11.5em;
+	width: 100%;
+}
+
+
+.selectSendTime
+{
+	grid-template-columns: 1fr;
+}
+
+.gridLeftAlign
+{
+	justify-self: center;
+}
+
+.gridRightAlign
+{
+	justify-self: center;
+}
+
+
+.listHolder
+{
+	max-height: 50vh;
+	min-width: 60%;
+	max-width: 80%;
+	overflow: auto;
+	border: 1px solid white;
+	margin-left: auto;
+	margin-right: auto;
+}
+
+.listHolder table
+{
+	width: 100%;
+	border-collapse: collapse;
+	background-color: white;
+	color: black;
+	font-size: 1rem;
+}
+
+.listHolder thead th
+{
+	position: sticky;
+	top: 0;
+	background-color: #e0e0e0;
+	z-index: 1;
+	padding: 5px;
+	border-bottom: 2px solid black;
+	text-align: left;
+}
+
+.listHolder td
+{
+	padding-left: 5px;
+	padding-top: 5px;
+	padding-bottom: 5px;
+	padding-right: 1em;
+	border-bottom: 1px solid darkgray;
+font-size:1rem;
+}
+
+
+.listHolder td:nth-child(1)
+{
+	min-width: 20px;
+}
+.listHolder td:nth-child(2)
+{
+	min-width: 5rem;
+}
+.listHolder td:nth-child(3)
+{
+	min-width: 10rem;
+}
+.listHolder td:nth-child(4)
+{
+	max-width: 16rem;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+.listHolder td:nth-child(5)
+{
+	overflow: hidden;
+	white-space: nowrap;
+	text-overflow: ellipsis;
+	max-width: 50rem;
+	color: green;
+	font-size: .6rem;
+}
+
+
+
 }

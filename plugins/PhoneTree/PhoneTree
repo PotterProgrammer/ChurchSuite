@@ -48,8 +48,6 @@ my $backupPassphrase = 'ReesesPieces';
 			}
 		});
 
-	print "BEEP!\n";
-	
 	#------------------------------------------------------------------------------
 	#  get '/login' -- This is the main login screen
 	#------------------------------------------------------------------------------
@@ -251,6 +249,16 @@ my $backupPassphrase = 'ReesesPieces';
 
 		$self->render( 'sendScheduledMessage');
 	};
+
+	#------------------------------------------------------------------------------
+	#	get 'viewScheduled'
+	#------------------------------------------------------------------------------
+	get 'viewScheduled' => sub
+	{
+		my ( $self) = @_;
+
+		$self->render( 'viewScheduledMessages');
+	};
 	
 	#------------------------------------------------------------------------------
 	#	get '/restore'
@@ -416,6 +424,20 @@ my $backupPassphrase = 'ReesesPieces';
 		my $message = $self->param( 'theMessage');
 		my $subject = $self->param( 'subject');
 		my $whenToSend = $self->param( 'whenToSend');
+		my $messageIds = $self->param( 'messageIds');   #  Ids of messages to replace, may be undefined.
+
+		##
+		##  Is this a change to a scheduled message?
+		##
+		if ( defined( $messageIds))
+		{
+			print "\n\nMessage IDS are: $messageIds\n\n";
+			openDB();
+			startTransaction();
+
+			my @messagesToRemove = split( ',', $messageIds);
+			deleteSelectedMessages( \@messagesToRemove);
+		}
 
 		##
 		##  Queue up the list of messages to send
@@ -427,6 +449,16 @@ my $backupPassphrase = 'ReesesPieces';
 			print "Sending message to $name ($id) from $from with a subject of \"$subject\" and a message of \"$message\".\n";
 			storeMessage( $id, $from, $subject, $message, $whenToSend);
 		}
+
+		##
+		##  Commit transaction, if rescheduling messages
+		##
+		if ( defined( $messageIds))
+		{
+			commitTransaction();
+			closeDB();
+		}
+		
 
 		##
 		##  Make sure the messenger is sending queued messages
@@ -465,7 +497,6 @@ my $backupPassphrase = 'ReesesPieces';
 
 		my %response = restoreBackup( $filename, $backupPassphrase);
 
-		print "Got back " . Dumper( %response) . "\n";
 		$self->stash( textMessage => $response{textMessage}, backupFile=> $response{backupFile}, title=> $response{title}, showFor => $response{showFor});
 		
 		if ( !defined( $response{backupFile}))
@@ -511,6 +542,56 @@ my $backupPassphrase = 'ReesesPieces';
 		$self->render( 'admin');
 	};
 	
+
+	#------------------------------------------------------------------------------
+	#	get '/editQueuedMessages'
+	#		This call allows the user to edit the queued messages whose rowids
+	#		are passed in the "messageIds" parameter.
+	#------------------------------------------------------------------------------
+	get '/editQueuedMessages' => sub
+	{
+		my $self = shift;
+
+		my $messageIds = $self->param( 'messageids');
+		my @idList = split( ',', $messageIds);
+
+		##
+		##  Get the message content of the first message in the list
+		##
+		my $message = getQueuedMessage( $idList[0]);
+		print "The message is:\n" . $message->{message} ."\n";
+		my @recipients = getMessageRecipients( \@idList);
+		$self->stash(
+			 			message => $message, 
+						recipients =>  \@recipients,
+						messageIds => $messageIds
+					);
+
+		$self->render( '/rescheduleMessage');
+	};
+
+
+	#------------------------------------------------------------------------------
+	#	post '/deleteQueuedMessages'
+	#		This call frees the queued messages whose rowids are passed in the
+	#		"messageIds" parameter.
+	#------------------------------------------------------------------------------
+	post '/deleteQueuedMessages' => sub
+	{
+		my $self = shift;
+
+		my $json = $self->req->json();
+		my $idList = $json->{messageIds};
+
+		if ( deleteSelectedMessages( $idList))
+		{
+			$self->render( status => 201, text => 'Complete');
+		}
+		else
+		{
+			$self->render( status=>409, text=>'An SQL error occurred.');
+		}
+	};
 
 	#------------------------------------------------------------------------------
 	#	websocket '/getContacts'
@@ -592,6 +673,57 @@ my $backupPassphrase = 'ReesesPieces';
 					}
 				  );
 	};
+
+	#------------------------------------------------------------------------------
+	#	websocket '/getMessageList'
+	#		This method is called to get a list of members that are in the message
+	#		queue.  It may optionally receive a type of 'all' to list all members.
+	#		If the type is unspecified or not 'all', it defaults to a list of 
+	#		all messages that have not yet been sent.  It returns a reference
+	#		to an array of hashrefs.  The hashrefs reference the fields:
+	#			(rowid, fromWho, subject, message, sendOn, status, retry)
+	#------------------------------------------------------------------------------
+	websocket '/getMessageList' => sub
+	{
+		my $self = shift;
+
+		##
+		##  Get a list of pending members
+		##
+		$self->on( message => sub
+					{
+						my ($self, $type) = @_;
+
+						my $list = ( defined($type) && ($type eq 'all')) ? allMessages() : allPendingMessages();
+						$self->send( {json => $list});
+					}
+				 );
+	};
+
+	#------------------------------------------------------------------------------
+	#	websocket '/messagesVary'
+	#		This call checks to see if the messages queued to be sent, that are
+	#		identified by their rowids in the comma-separated list of numbers,
+	#		have varying message content.  A non-zero value is returned if the
+	#		message texts differ.
+	#------------------------------------------------------------------------------
+	websocket '/messagesVary' => sub
+	{
+		my $self = shift;
+
+		##
+		##  Get a list of pending members
+		##
+		$self->on( message => sub
+					{
+						my ($self, $list) = @_;
+
+						my @rowIds = split( ",", $list);
+						my $result = messagesVary( \@rowIds);
+						$self->send( {json => $result });
+					}
+				 );
+	};
 	
 	#------------------------------------------------------------------------------
 	#	websocket '/backup'
@@ -635,6 +767,7 @@ my $backupPassphrase = 'ReesesPieces';
 #------------------------------------------------------------------------------
 sub startMessenger()
 {
+	return;
 	print "*****************************\n";
 	print "  Starting the messenger...\n";
 	print "*****************************\n";

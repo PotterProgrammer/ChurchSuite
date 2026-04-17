@@ -5,7 +5,26 @@ package PhoneTree::Messages;
 
 require Exporter;
 @ISA = qw( Exporter);
-@EXPORT = qw( storeMessage pendingMessages messagesArePending setMessageStatus resetToPending purgeSentMessages bumpRetryCount);
+@EXPORT = qw( 
+			 allMessages
+			 allPendingMessages
+			 bumpRetryCount
+			 deleteSelectedMessages
+			 getMessageRecipients
+			 getQueuedMessage
+			 messagesArePending
+			 messagesVary
+			 pendingMessages
+			 purgeSentMessages
+			 resetToPending
+			 setMessageStatus
+			 storeMessage
+			 openDB
+			 closeDB
+			 startTransaction
+			 commitTransaction
+			 rollbackTransaction
+			);
 
 use warnings;
 use strict;
@@ -21,6 +40,7 @@ use PhoneTree::Members;
 
 
 my $dbh;
+my $inTransaction = 0;
 
 #------------------------------------------------------------------------------
 #  sub initDB()
@@ -51,6 +71,9 @@ sub initDB()
 #------------------------------------------------------------------------------
 sub openDB()
 {
+
+	return if ($inTransaction);
+
 	if ( !defined( $dbh))
 	{
 		$dbh = DBI->connect( "dbi:SQLite:${PhoneTree::Members::DBFilename}", "", "", {AutoCommit =>1}) or die "Sorry, couldn't open PhoneTree database!\n";
@@ -64,11 +87,48 @@ sub openDB()
 #------------------------------------------------------------------------------
 sub closeDB()
 {
+	return if ($inTransaction);
+
 	if ( defined( $dbh))
 	{
 		$dbh->disconnect();
 		undef $dbh;
 	}
+}
+
+#------------------------------------------------------------------------------
+#  sub startTransaction()
+#  		This routine starts a transaction on an already open DB.  The
+#  		transaction remains open until either commitTransaction() or
+#  		rollbackTransaction() is called.  While the transaction is open, all
+#  		calls to openDB() and closeDB() are disabled.
+#------------------------------------------------------------------------------
+sub startTransaction()
+{
+	$inTransaction = 1;
+	$dbh->begin_work;
+}
+
+#------------------------------------------------------------------------------
+#  sub commitTransaction()
+#  		This routine commits all requests since the call to startTransaction()
+#  		and then ends the transaction.
+#------------------------------------------------------------------------------
+sub commitTransaction()
+{
+	$dbh->commit;
+	$inTransaction = 1;
+}
+
+#------------------------------------------------------------------------------
+#  sub rollbackTransaction()
+#  		This routine rolls back all requests since the call to
+#  		startTransaction() and then ends the transaction.
+#------------------------------------------------------------------------------
+sub rollbackTransaction()
+{
+	$dbh->rollback;
+	$inTransaction = 0;
 }
 
 #------------------------------------------------------------------------------
@@ -112,18 +172,174 @@ sub storeMessage(@)
 }
 
 #------------------------------------------------------------------------------
+#  sub allMessages()
+#		This routine returns an arrayref to a list of all messages that are in the
+#		queue.
+#------------------------------------------------------------------------------
+sub allMessages()
+{
+	openDB();
+
+	print "Getting a list of all messages\n";
+	my $messageList = $dbh->selectall_arrayref( "select rowid, * from Messages", {Slice => {}});
+
+	closeDB();
+	return $messageList;
+}
+
+#------------------------------------------------------------------------------
+#  sub getQueuedMessage($)
+#  		This routine gets the message with the indicated rowId.  It returns
+#  		a hashref to the message data.  The hashref will be undefined if an 
+#  		error occurs.
+#------------------------------------------------------------------------------
+sub getQueuedMessage($)
+{
+	my ($rowid) = @_;
+
+	openDB();
+
+	my $messageInfo = $dbh->selectrow_hashref( "select * from Messages where rowid=?", undef, $rowid);
+	closeDB();
+	return $messageInfo;
+}
+
+#------------------------------------------------------------------------------
+#  sub getMessageRecipients( $messageIdList)
+#  		This routine returns an array of all of the user Ids of the messages in 
+#  		the provided list of message Ids.
+#------------------------------------------------------------------------------
+sub getMessageRecipients($)
+{
+	my ($messageIdList) = @_;
+	my @recipients;
+
+	if ( @{$messageIdList})
+	{
+		my $rowIds =  '[' . join( ',', @{$messageIdList}) . ']';
+		openDB();
+		my $messages = $dbh->selectall_arrayref( "select sendTo from Messages where rowid in ( select value from json_each(?))", undef, $rowIds);
+		@recipients = map { $_->[0]}  @${messages};
+		closeDB();
+	}
+	return @recipients;
+}
+
+#------------------------------------------------------------------------------
+#  sub messagesVary( $messageIdList)
+#  		This routine returns a non-zero value if the message fields in the
+#  		messages in the Messages table identified by the provided row IDs have
+#  		differing text.  For example, if the the message for row 3 was "Unique"
+#  		and the text for the message in row 4 was "Varied", a non-zero value
+#  		would be returned.  However, if both message texts were "Common", zero
+#  		would be returned.
+#------------------------------------------------------------------------------
+sub messagesVary( $)
+{
+	my ($messageIdList) = @_;
+	my $rc = 0;
+
+	if ( @{$messageIdList})
+	{
+		my $rowIds =  '[' . join( ',', @{$messageIdList}) . ']';
+		openDB();
+		my $messages = $dbh->selectrow_arrayref( "select count( distinct message) from Messages where rowid in ( select value from json_each(?))", undef, $rowIds);
+		$rc = int($messages->[0] != 1);
+	}
+
+	return $rc;
+}
+
+##-->#------------------------------------------------------------------------------
+##-->#  sub getMessageRecipients( $messageIdList)
+##-->#  		This routine returns an array of all of the user Ids of the messages in 
+##-->#  		the provided list of message Ids.
+##-->#------------------------------------------------------------------------------
+##-->sub getMessageRecipients($)
+##-->{
+##-->	my ($messageIdList) = @_;
+##-->	my @recipients;
+##-->
+##-->	if ( @{$messageIdList})
+##-->	{
+##-->		my $rowIds =  '[' . join( ',', @{$messageIdList}) . ']';
+##-->		print "Row IDS: $rowIds\n";
+##-->		openDB();
+##-->		my $messages = $dbh->selectall_arrayref( "select sendTo from Messages where rowid in ( select value from json_each(?))", undef, $rowIds);
+##-->		print Dumper( $messages) . "\n";;
+##-->		@recipients = map { $_->[0]}  @${messages};
+##-->		print "Recipients are:\n\t" . join( "\n\t", @recipients) . "\n\n";
+##-->		closeDB();
+##-->	}
+##-->	return @recipients;
+##-->}
+
+#------------------------------------------------------------------------------
 #  sub pendingMessages()
 #		This routine returns an arrayref to a list of all messages that are in the
-#		'Pending' state.
+#		'Pending' state and have a send date earlier than now.
 #------------------------------------------------------------------------------
 sub pendingMessages()
 {
 	openDB();
+	print "Getting a list of pending messages\n";
 
 	my $memberList = $dbh->selectall_arrayref( "select rowid, * from Messages where status = 'Pending' and sendOn <= datetime('now', 'localtime')", {Slice => {}});
 
 	closeDB();
 	return $memberList;
+}
+
+#------------------------------------------------------------------------------
+#  sub allPendingMessages()
+#		This routine returns an arrayref to a list of all Pending messages that
+#		are in the queue.
+#------------------------------------------------------------------------------
+sub allPendingMessages()
+{
+	openDB();
+
+	print "Getting a list of all messages\n";
+	my $query = <<~ "ESQL";
+	   select m.rowid,m.status,m.sendOn,c.firstname,c.lastname,m.message
+	   from Messages as m inner join Contacts as c 
+	   on m.sendTo = c.rowid 
+	   where m.status = 'Pending'
+	   ESQL
+	#
+	my $messageList = $dbh->selectall_arrayref( $query, {Slice => {}});
+	print "Got back " . Dumper( $messageList) . "\n";
+
+	closeDB();
+	return $messageList;
+}
+
+#------------------------------------------------------------------------------
+#  sub deleteSelectedMessages( $messageList)
+#  		This method deletes all indicated messages from the message queue.  
+#  		@{$messageList} contains the rowId of each message to be deleted.
+#  		A value of true is returned if the delete was successful.
+#------------------------------------------------------------------------------
+sub deleteSelectedMessages($)
+{
+	my $messageList = shift( @_);
+	my $rc = 1;
+
+	openDB();
+
+	my $sth = $dbh->prepare( "delete from messages where rowid in ( Select value from json_each( ?))");
+	my $rows =  '[' . join( ',', @{$messageList}) . ']';
+	$sth->bind_param( 1, $rows);
+	$sth->execute();
+
+	if( $sth->err)
+	{
+		$rc = 0;
+		print STDERR "DB ERROR!  $sth->err:  $sth->errstr\n";
+	}
+
+	closeDB();
+	return $rc;
 }
 
 #------------------------------------------------------------------------------
@@ -138,6 +354,7 @@ sub messagesArePending()
 	my $countList = $dbh->selectall_arrayref( "select count(*) from Messages where sendOn <= datetime('now', 'localtime') and (status = 'Pending' or status = 'Sending')");
 
 	closeDB();
+	print "$countList->[0]->[0] messages are pending...\n";
 	return $countList->[0]->[0];
 }
 

@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+  <link rel="stylesheet" href="/phonetree/site.css">
+</head>
+
+<script src="/common/Dialog.js"></script>
+<script src="/common/loadNav.js"></script>
+<script src="/common/PhoneTree.js"></script>
+
+
+<script>
+
+const SELECTED_ROW = '#ceddf7';
+const UNSELECTED_ROW = 'white';
+
+//==============================================================================
+//	function selectAll( event)
+//==============================================================================
+function selectAll( event)
+{
+	//
+	//  See if the box is checked
+	//
+	const checked = event.target.checked;
+
+	let table = document.getElementById( 'messageList');
+
+	for ( let row of table.rows)
+	{
+		let checkbox = row.cells[0].querySelector('input')
+		checkbox.checked = checked;
+
+		if ( checked)
+		{
+			row.style.backgroundColor = SELECTED_ROW;
+		}
+		else
+		{
+			row.style.backgroundColor = UNSELECTED_ROW;
+		}
+	}
+}
+//==============================================================================
+//	function messageClicked( event)
+//==============================================================================
+function messageClicked( event)
+{
+	//
+	//  Find the row holding the checkbox
+	//
+	const row = event.target.closest('tr');
+			
+	if ( row)
+	{
+		if ( event.target.checked)
+		{
+			row.style.backgroundColor = SELECTED_ROW;
+		}
+		else
+		{
+			row.style.backgroundColor = UNSELECTED_ROW;
+		}
+	}
+}
+
+//==============================================================================
+//  function showMessageList( messageList)
+//==============================================================================
+function showMessageList( messageList)
+{
+	//
+	//  Add the messages to the table
+	//
+	let table = document.getElementById( 'messageList');
+
+	//
+	//  First, clear the table
+	//
+	const tableBody = document.querySelector('#messageList tbody');
+	tableBody.innerHTML = '';
+
+	//
+	//  Then add the entries
+	//
+	messageList.forEach( (message) =>
+			{
+					let row = tableBody.insertRow( -1);
+					let column0 = row.insertCell( 0);
+					let checkBox = document.createElement( 'input');
+					checkBox.setAttribute( 'type', 'checkbox');
+					checkBox.id = "MSG" + message.rowid;
+					checkBox.value = message.rowid;
+					column0.appendChild( checkBox);
+					checkBox.addEventListener( 'change', messageClicked);
+
+					let column1 = row.insertCell(-1);
+					column1.appendChild( document.createTextNode( message.status));
+				
+					let dateParts = message.sendOn.split( ' ');
+					let time = dateParts[1].match( /^(\d+):(\d+):/);
+					let hour = Number( time[1]);
+					let ampm = 'am';
+					let minute = time[2];
+					if ( hour >= 12)
+					{
+						ampm = 'pm';
+						if ( hour > 12)
+						{
+							hour -= 12;
+						}
+					}
+					if ( hour == 0)
+					{
+						hour = 12;
+					}
+					let timeString = `${dateParts[0]} ${hour.toString().padStart( 2, '0')}:${minute}${ampm}`;
+					let column2 = row.insertCell(-1);
+					column2.appendChild( document.createTextNode( timeString));
+
+					let column3 = row.insertCell(-1);
+					column3.appendChild( document.createTextNode( `${message.firstname} ${message.lastname}`));
+
+					let column4 = row.insertCell(-1);
+					column4.appendChild( document.createTextNode( message.message));;
+			});
+			
+	
+}
+
+//==============================================================================
+//  function getMessageList()
+//==============================================================================
+function getMessageList()
+{
+		var ws;
+		var url;
+
+		if ( window.location.protocol == 'https:')
+		{
+				url = 'wss://' + window.location.host + '/phonetree/getMessageList';
+		}
+		else
+		{
+				url = 'ws://' + window.location.host + '/phonetree/getMessageList';
+		}
+
+		ws = new WebSocket( url);
+
+		ws.onopen = () => 
+		{
+			ws.send( 'Pending');
+		};
+
+		ws.onerror = (event) =>
+		{
+			ws.close();
+			ws = new WebSocket( url);
+			ws.onopen = (event) => 
+			{
+					ws.send( 'Pending');
+			};
+		};
+
+		ws.onmessage = (msg) =>
+		{
+			let reply = JSON.parse( msg.data);
+
+			showMessageList( reply);
+			ws.close();
+		};
+}
+
+//==============================================================================
+//  function messagesVary( messageIds)
+//==============================================================================
+function messagesVary( messageIds)
+{
+	return new Promise( (resolve, reject) =>
+		{
+			var ws;
+			var url;
+
+			if ( window.location.protocol == 'https:')
+			{
+				url = 'wss://' + window.location.host + '/phonetree/messagesVary';
+			}
+			else
+			{
+				url = 'ws://' + window.location.host + '/phonetree/messagesVary';
+			}
+			ws = new WebSocket( url);
+
+			ws.onopen = (event) => 
+			{
+				const rowIds = messageIds.join();
+				ws.send( rowIds);
+			};
+
+			ws.onerror = (event) =>
+			{
+				ws.close();
+				const rowIds = messageIds.join();
+				ws = new WebSocket( url);
+				ws.onopen = (event) => 
+				{
+					ws.send( rowIds);
+				};
+			};
+
+			ws.onmessage = (msg) =>
+			{
+				let reply = JSON.parse( msg.data);
+				resolve( reply);
+			};
+
+		});
+
+}
+
+//==============================================================================
+//  function getSelectedMessages()
+//==============================================================================
+function getSelectedMessages()
+{
+	const selectedRows = document.querySelectorAll('#messageList tbody tr:has(input[type="checkbox"]:checked)');
+	const selectedRowIds = [...selectedRows].map( row => row.cells[0].querySelector( 'input').value);
+	return selectedRowIds;
+}
+
+//==============================================================================
+//  function editSelectedMessages()
+//==============================================================================
+async function editSelectedMessages()
+{
+	let rowsToEdit = getSelectedMessages();
+	let messagesDiffer;
+	
+	if ( rowsToEdit.length > 0)
+	{
+		messagesDiffer = await messagesVary( rowsToEdit);
+
+		if ( messagesDiffer)
+		{
+			Dialog.Alert( {	title: "Different Messages Selected",
+						 	text: "You have selected messages that contain different text.<br>Please edit messages with different text separately."
+						  });
+			return;
+		}
+		const data = { messageids: rowsToEdit};
+		const params = new URLSearchParams( data).toString();
+		window.location.href = `editQueuedMessages?${params}`;
+
+	}
+}
+
+//==============================================================================
+//  function deleteSelectedMessages()
+//		This method prompts the user to confirm that the selected messages
+//		should be deleted, and if the user chooses "Yes", deletes the selected
+//		messages from the message queue.
+//==============================================================================
+function deleteSelectedMessages()
+{
+	Dialog.Confirm( {text: 'Are you sure that you want to delete all of the selected messages without sending them?',
+	               	title: "Caution:"})
+	   .then( (answer) =>
+		{
+			if ( answer)
+			{
+				let rowsToDelete = getSelectedMessages();
+				fetch( '/phonetree/deleteQueuedMessages',
+						{
+							method: "POST",
+							body: JSON.stringify( { 'messageIds': rowsToDelete}),
+							headers: { "Content-type": "application/json"}
+						}
+					  )
+				.then( response => 
+						{
+							if ( response.status == 201)
+							{
+								Dialog.Notify( {
+												title: 'Request Completed',
+									            text:  'All requested messages have been deleted.'
+											   }).then( () => { window.location.href = 'index';});
+							}
+						});
+
+			}
+		});
+}
+
+//
+//  Set the modified event handler for the member list once the page has loaded
+//
+//-->window.addEventListener( "load", function ()
+window.addEventListener( "DOMContentLoaded", function ()
+	{
+		getMessageList();
+	});
+
+
+</script>
+
+<body>
+	<div id="navbar">
+	</div>
+
+<h1>View Scheduled Messages</h1>
+
+<p id="instructions">
+	The list below shows all messages that are currently scheduled to be sent.
+	Once you select one or more of the messages below, you will have the option of
+	either deleting or editing the selected messages. (Note that editing a message
+	with a status of <b>Sent</b> gives you the option of resending a message that 
+	was previously sent.
+</p>
+
+<br>
+<div class="listHolder">
+	<table id="messageList">
+		<thead>
+			<tr>
+					<th><input type="checkbox" id="selectAll" name="selectAll" onClick="selectAll(event)"></th>
+					<th>Status</th>
+					<th>Date</th>
+					<th>Send To</th>
+					<th>Message</th>
+			</tr>
+		</thead>
+		<tbody>
+		</tbody>
+	</table>
+</div>
+<br>
+<div class="buttonRow">
+		<button onClick="editSelectedMessages()">Edit Selected Messages</button>
+		<button onClick="deleteSelectedMessages()">Delete Selected Messages</button>
+</div>
+
+</body>
+</html>
+
+
+
