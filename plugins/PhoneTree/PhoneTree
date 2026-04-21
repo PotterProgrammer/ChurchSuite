@@ -601,9 +601,12 @@ my $backupPassphrase = 'ReesesPieces';
 	websocket '/getContacts' => sub
 	{
 		my $self = shift;
+
 		my $list = readContacts();
-##-->		print "Sending:\n\t" . Dumper( $list)."\n";
-		$self->send( {json => $list});
+		$self->send( {json => $list}, sub { my ($ws, $err) = @_; print "Send failed: $err\n" if $err});
+
+##-->		$self->on( drain => sub { print "All data sent successfully!\n"});
+##-->		$self->on( finish => sub { my ($ws, $code, $reason) = @_; print "Closed with code ($code)!  $reason\n";});
 	};
 
 	#------------------------------------------------------------------------------

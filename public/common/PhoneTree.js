@@ -113,7 +113,7 @@ function readContactList()
 {
 	return new Promise((resolve, reject) =>
 		{
-			var ws;
+			let ws;
 			var url;
 
 			if ( window.location.protocol == 'https:')
@@ -128,23 +128,23 @@ function readContactList()
 
 			ws.onopen = (event) => 
 			{
-				ws.send('');
+				console.log( "Sending query");
+				ws.send('{"query": "contacts"}');
 			};
 
 			ws.onerror = (event) =>
 			{
-				ws.close();
-				ws = new WebSocket( url);
-				ws.onopen = (event) => 
-				{
-					ws.send('');
-				};
+				console.log( "Got error dude! "  + event.code + " reason: " + event.reason);
+				ws.close( 1001, "Closed on client");
 			};
 
 			ws.onmessage = (msg) =>
 			{
+				console.log( "Got reply");
 				let reply = JSON.parse( msg.data);
 				resolve( reply);
+				console.log( "Closing connection from client");
+				ws.close( 1000, "Client is done");
 			};
 		}
 	);

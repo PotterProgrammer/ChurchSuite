@@ -10,6 +10,7 @@
 <script src="/common/loadNav.js"> </script>
 <script src="/common/PhoneTree.js"> </script>
 
+
 <script>
 //==============================================================================
 //  function addMember()
@@ -215,6 +216,8 @@ function refreshContactList()
 		select.remove(0);
 	}
 
+	readGroupList().then( () => 
+		{
 	readContactList()
 					.then(( list) =>
 						{
@@ -228,6 +231,7 @@ function refreshContactList()
 
 							multiSelectWithoutCtrl('multiSel');
 						});
+	});
 }
 
 //==============================================================================
@@ -302,7 +306,7 @@ function updateMemberDialog( info)
 	}
 }
 
-window.addEventListener( "load", refreshContactList);
+window.addEventListener( "load", function() { refreshContactList() });
 
 </script>
 

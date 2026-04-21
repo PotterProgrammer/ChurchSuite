@@ -274,25 +274,27 @@ window.addEventListener( "load", function ()
 <h1>Edit Groups</h1>
 
 <p id="instructions">
-	Enter the name of the new group. Or click on the down arrow, select the
-	name of an existing group from the box on the left, and click the <b>Show Members</b> button.
-	Then, select the names of those who are a part of that group from the box on the right.
+	To create a new group, enter the name of the new group in the <b>Group</b>
+	field.  To edit an existing group, click on the down arrow, and select the
+	name of an existing group, then click the <b>Show Members</b> button.
+	Next, select the names of those who are a part of that group from the <b>Group Members</b> box.
 	Press the <b>Save Group</b> button when all group members are selected.
 	To remove a group, select the group name and press <b>Delete Group</b>.
 </p>
 
-<div id="screen" style="justify-content:center">
-	<div class="groupColumnItem">
+<div id="groupScreen" style="justify-content:center">
+	<div class="groupColumnItem" id="groupInfo">
 		<div class="groupRowItem">
 			<div class="flexCentered">
 				<span class="withDropdown">
-				<label for="groups">Group Name:</label>
+				<label for="groups" id="groupLabel"></label>
 				<input name="groups" id="groups" list="groupName" tabindex="1" placeholder="Enter group name..." onchange="setGroupMembers()">
 				<datalist id="groupName">
 					<option value="Choir">Choir</option>
 					<option value="Trustees">Trustees</option>
 					<option value="SPR">SPR</option>
 				</datalist>
+				<span id="dropDownMarker">▼</span>
 				</span>
 				<button onClick="setGroupMembers()" id="memberButton">Show Members</button>
 			</div>
@@ -307,6 +309,8 @@ window.addEventListener( "load", function ()
 	
 	<div class="groupColumnItem">
 		<div class="groupRowItem showCheckBoxes">
+			<label for="groupMembers">Group Members:</label>
+			<br>
 			<select name="groupMembers" class="groupMembers" id="groupMembers" size="11" multiple>
 				<option value="Choir" class="multiSel" type="group">Choir</option>
 				<option value="Bob 41" class="multiSel" type="member">Bob</option>
@@ -316,7 +320,7 @@ window.addEventListener( "load", function ()
 				<option value="Will 41" class="multiSel" type="member">William A. Stanley</option>
 			</select>
 		</div>
-		<div class="groupRowItem">
+		<div class="groupRowItem showCheckBoxes">
 			<div class="selectAllButtons">
 			<button onClick="selectAllMembers()">Select All</button>
 			<button onClick="unSelectAllMembers()">Select None</button>

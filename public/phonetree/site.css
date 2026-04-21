@@ -660,6 +660,32 @@ adminNamesList
 	display:flex;
 }
 
+#groupScreen
+{
+	display: grid;
+	grid-template-columns: 2fr 1fr;
+	grid-column-gap: .5em;
+}
+
+#groups
+{
+	max-width: 50%;
+}
+
+#groupLabel::after
+{
+	content: "Group Name:";
+}
+
+#dropDownMarker
+{
+	left: -1em;
+	position: relative;
+	color: black;
+	top: 2px;
+	pointer-events: none;
+}	
+
 .blue-background
 {
 	background-color: #0000ec;
@@ -881,9 +907,13 @@ adminNamesList
 
 .withDropdown
 {
-	position:relative;
+/*	position:relative; */
+	display: flex;
+	justify-content: flex-end;
+	max-width: 50%;
 }
 
+/*
 .withDropdown:after
 {
 	content: "\25bc";
@@ -893,6 +923,7 @@ adminNamesList
 	top: 2px;
 	pointer-events: none;
 }
+*/
 
 .groupMembers
 {
@@ -923,6 +954,7 @@ option[type="member"]
 	color: black;
 	font-weight: normal;
 }
+
 
 #memberButton
 {
@@ -1149,7 +1181,28 @@ font-size:1rem;
 	max-width: 50em;
 }
 
+@media( max-width: 414px)
+{
+
+#groupLabel::after
+{
+	content: "Group:";
+}
+
+
+}
+
 @media (max-width: 900px) {
+
+#groupScreen
+{
+	grid-template-columns: 1fr;
+}
+
+#groupInfo
+{
+	order: 2;
+}
 
 .messageScreen
 {
