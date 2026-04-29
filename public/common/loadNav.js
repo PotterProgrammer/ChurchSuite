@@ -9,8 +9,71 @@ function loadNavBar()
        .then(response => response.text())
        .then(data => {
             document.getElementById('navbar').innerHTML = data;
+			setUpHamburger();
         });
 
+
+}
+
+//==============================================================================
+//  function closeAllSubmenus()
+//==============================================================================
+function closeAllSubmenus()
+{
+    document.querySelectorAll('.submenuContent').forEach(sub => sub.classList.remove('show'));
+}
+
+//==============================================================================
+//  function setUpHamburger()
+//==============================================================================
+function setUpHamburger()
+{
+	const menuBtn = document.getElementById('menuToggleButton');
+	const mainMenu = document.getElementById('menu');
+	const subMenuButtons = document.querySelectorAll('.submenuButton');
+
+	// 1. Toggle Main Drawer
+	menuBtn.addEventListener('click', (e) => {
+		e.stopPropagation();
+		const isOpening = !mainMenu.classList.contains('open');
+
+		menuBtn.classList.toggle('active');
+		mainMenu.classList.toggle('open');
+
+		// IF we are closing the menu (by clicking the X), hide submenus too
+		if (!isOpening) 
+		{
+			closeAllSubmenus();
+		}
+	});
+
+	// 2. Toggle Submenus
+	subMenuButtons.forEach(trigger => {
+		trigger.addEventListener('click', (e) => {
+			e.stopPropagation();
+			const targetId = trigger.getAttribute('data-target');
+			const targetMenu = document.getElementById(targetId);
+
+			// Close other submenus first
+			document.querySelectorAll('.submenu').forEach(sub => {
+				if (sub !== targetMenu)
+				{
+					sub.classList.remove('show');
+				}
+			});
+
+			targetMenu.classList.toggle('show');
+		});
+	});
+
+	// 3. Click Outside to Close Everything
+	document.addEventListener('click', (e) => {
+		if (!mainMenu.contains(e.target) && !menuBtn.contains(e.target)) {
+			mainMenu.classList.remove('open');
+			menuBtn.classList.remove('active');
+			closeAllSubmenus();
+		}
+	});
 }
 
 //==============================================================================

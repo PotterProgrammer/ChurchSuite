@@ -113,8 +113,8 @@ function readContactList()
 {
 	return new Promise((resolve, reject) =>
 		{
-			let ws;
-			var url;
+			let webSocket;
+			let url;
 
 			if ( window.location.protocol == 'https:')
 			{
@@ -124,27 +124,27 @@ function readContactList()
 			{
 				url = 'ws://' + window.location.host + '/phonetree/getContacts';
 			}
-			ws = new WebSocket( url);
+			webSocket = new WebSocket( url);
 
-			ws.onopen = (event) => 
+			webSocket.onopen = (event) => 
 			{
 				console.log( "Sending query");
-				ws.send('{"query": "contacts"}');
+				webSocket.send('{"query": "contacts"}');
 			};
 
-			ws.onerror = (event) =>
+			webSocket.onerror = (event) =>
 			{
 				console.log( "Got error dude! "  + event.code + " reason: " + event.reason);
-				ws.close( 1001, "Closed on client");
+				webSocket.close( 1001, "Closed on client");
 			};
 
-			ws.onmessage = (msg) =>
+			webSocket.onmessage = (msg) =>
 			{
 				console.log( "Got reply");
 				let reply = JSON.parse( msg.data);
 				resolve( reply);
 				console.log( "Closing connection from client");
-				ws.close( 1000, "Client is done");
+				webSocket.close( 1000, "Client is done");
 			};
 		}
 	);

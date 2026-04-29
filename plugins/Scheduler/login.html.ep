@@ -2,6 +2,7 @@
 
 <html>
 <head>
+	<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 	<link rel="stylesheet" href="/scheduler/site.css">
 </head>
 
@@ -12,7 +13,7 @@
 		<div  class="loginForm">
 			<form method="post" action='/scheduler/login'>
 				<label for="user">Login Name:</label>
-				<input class="form-control" id="user" name="user" type="text" size="40" />
+				<input class="form-control" id="user" name="user" type="text" size="40" autofocus />
 				<br/> 
 				<label for="password" style="margin-right:1em">Password:</label>
 				<input class="form-control" id="password" name="password" type="password" size="40" />

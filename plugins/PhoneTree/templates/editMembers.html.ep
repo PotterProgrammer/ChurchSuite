@@ -319,12 +319,14 @@ window.addEventListener( "load", function() { refreshContactList() });
 
 <p id="instructions">
 	To add a new member, enter member information in the box below and click <b>Add Member</b>.
-	To edit a members information, select the member name from the box on the left, edit it, and click <b>Update Member</b>.
+	To edit a members information, select the member name from the
+	<b>Members</b> box, edit the information in the information box, and click <b>Update Member</b>.
 	To remove a member from the list, select the member name and click <b>Delete Member</b>.
 </p>
 
 <div id="screen">
 	<div id="list">
+		<label for="members" id="membersLabel">Members:</label>
 		<select name="members" class="nameList" id="memberList" size="11" onChange="showContactInfo()">
 		</select>
 	</div>
@@ -389,7 +391,6 @@ window.addEventListener( "load", function() { refreshContactList() });
 					</div>
 				</div>
 			</form>
-			::about
 		</div>
 		<div id="buttons">
 			<button type="button" onclick="addMember()">Add Member</button -->

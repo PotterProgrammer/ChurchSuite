@@ -39,7 +39,7 @@ function saveGroup()
 	//
 	//  First, get the group name
 	//
-	let groupName = document.getElementById("groups").value;
+	let groupName = document.getElementById("groupNames").value;
 
 	//
 	//  Then get the list of members
@@ -67,7 +67,7 @@ function saveGroup()
 				{	
 				   Dialog.Notify( { title: "Saved ", text: groupName, showFor: 1000 }).then( ()=>
 					{
-						document.getElementById("groups").value = '';
+						document.getElementById("groupNames").value = '';
 						window.location.reload();
 					});
 				}
@@ -85,7 +85,7 @@ function saveGroup()
 //==============================================================================
 function removeGroup()
 {
-    let group = document.getElementById( 'groups').value;
+    let group = document.getElementById( 'groupNames').value;
 
 	if ( group == undefined)
 	{
@@ -115,7 +115,7 @@ function removeGroup()
 							{	
 							   Dialog.Notify( { title: "Removed ", text: group, showFor: 1000 }).then( ()=>
 								{
-									document.getElementById("groups").value = '';
+									document.getElementById("groupNames").value = '';
 									window.location.reload();
 								});
 							}
@@ -178,7 +178,7 @@ function setGroupMembers()
 	//
 	//  Next, get the current members of the named group
 	//
-	let groupName = document.getElementById("groups").value;
+	let groupName = document.getElementById("groupNames").value;
 	readGroupMemberList( groupName)
 		.then( (list) =>
 			{
@@ -287,8 +287,8 @@ window.addEventListener( "load", function ()
 		<div class="groupRowItem">
 			<div class="flexCentered">
 				<span class="withDropdown">
-				<label for="groups" id="groupLabel"></label>
-				<input name="groups" id="groups" list="groupName" tabindex="1" placeholder="Enter group name..." onchange="setGroupMembers()">
+				<label for="groupNames" id="groupLabel"></label>
+				<input name="groupNames" id="groupNames" list="groupName" tabindex="1" placeholder="Enter group name..." onchange="setGroupMembers()">
 				<datalist id="groupName">
 					<option value="Choir">Choir</option>
 					<option value="Trustees">Trustees</option>

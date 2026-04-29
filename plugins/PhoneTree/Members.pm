@@ -49,7 +49,7 @@ sub initDB()
 					(
 						name text,
 						memberName text,
-						memberId integer,
+						id integer,
 						isGroup integer not null default 0
 					)'
 			);

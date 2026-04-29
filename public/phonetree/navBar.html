@@ -2,26 +2,34 @@
 
 <nav id="mainMenu">
 	<a href="/phonetree/index"><img src="/phonetree/PhoneTreeIcon.png"></a>
-	<a href="/phonetree/editMembers">Edit Members</a>
-	<a href="/phonetree/editGroups">Edit Groups</a>
-	<div class="submenu">
-		<button class="submenuButton">Messages⏷</button>
-		<div class="submenuContent">
-			<a href="/phonetree/sendMessage">Send message now</a>
-			<a href="/phonetree/scheduled">Schedule a message</a>
-			<a href="/phonetree/viewScheduled" accesskey="v">View scheduled messages</a>
-		</div>
-	</div>
-	<div class="submenu" id="gearMenu">
-		<span class="submenuButton">
+	<div id="menuToggle">
+	<ul id="menu">
+		<li><a href="/phonetree/editMembers">Edit Members</a></li>
+		<li><a href="/phonetree/editGroups">Edit Groups</a></li>
+		<li class="submenu">
+			<button class="submenuButton" data-target="messageSubmenu">Messages⏷</button>
+			<ul class="submenuContent" id="messageSubmenu">
+				<li><a href="/phonetree/sendMessage" >Send message now</a></li>
+				<li><a href="/phonetree/scheduled" >Schedule a message</a></li>
+				<li><a href="/phonetree/viewScheduled"  >View scheduled messages</a></li>
+			</ul>
+		</li>
+		<li class="submenu" id="gearMenu">
 			<img id="gear" src="/phonetree/images/gear64.png">
-		</span>
-		<div class="submenuContent rightEdge">
-			<a href="/phonetree/config">System Settings</a>
-			<a onclick="makeABackup();return false;" >Make Backup</a>
-			<a href="/phonetree/restore">Restore Backup</a>
-			<a href="/phonetree/logoff">Log off</a>
-		</div>
-	</div>
+			<button class="submenuButton" data-target="systemSubmenu"></button>
+			</img>
+			<ul class="submenuContent" id="systemSubmenu">
+				<li><a href="/phonetree/config" >System Settings</a></li>
+				<li><a onclick="makeABackup();return false;"  >Make Backup</a></li>
+				<li><a href="/phonetree/restore" >Restore Backup</a></li>
+				<li><a href="/phonetree/logoff" >Log off</a></li>
+			</ul>
+		</li>
+	</ul> 
+	<button class="hamburger" id="menuToggleButton">
+		<span></span>
+		<span></span>
+		<span></span>
+	</button>
 </nav>
 

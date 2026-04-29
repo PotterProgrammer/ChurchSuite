@@ -49,6 +49,10 @@ select:disabled,option:checked
 	background-color:white;
 }
 
+.hamburger
+{
+	display: none;
+}
 
 #settingInstructions
 {
@@ -153,7 +157,6 @@ select:disabled,option:checked
 	margin-right: auto;
 }
 
-
 nav {
 	background-color: lightgray;
     color: blue;
@@ -209,6 +212,7 @@ nav ul li a
 {
     color: black;
     text-decoration: none;
+	margin-top: 12px;
 }
 
 nav ul li a:hover 
@@ -235,9 +239,11 @@ nav ul li a:hover
 	color: black;
 	background-color: lightgray;
 	font-family: inherit;
+	font-size: 13pt;
 	margin-top: 0.5em;
 	margin-left: 2em;
 }
+
 
 
 .submenuContent
@@ -252,10 +258,14 @@ nav ul li a:hover
 	border-right: solid 1px gray;
 }
 
+@media (min-width: 901px)
+{
 .submenu:hover .submenuContent
 {
 	display: grid;
 }
+}
+
 
 .submenuContent  a 
 {
@@ -273,9 +283,10 @@ nav ul li a:hover
 	margin-top: 0;
 	margin-right: 10px;
 	top: 5px;
+	left: 50px;
 }
 
-.rightEdge
+#gear ~ .submenuContent
 {
 	left: calc( 99.25vw - 14.65em);
 /*	margin-top: 3px; */
@@ -667,7 +678,7 @@ adminNamesList
 	grid-column-gap: .5em;
 }
 
-#groups
+#groupNames
 {
 	max-width: 50%;
 }
@@ -713,6 +724,15 @@ adminNamesList
 	display: flex;
 	justify-content: center;
 	width: 30%;
+	flex-direction: column;
+	align-items: center;
+}
+
+#membersLabel
+{
+	top: -1em;
+	position: relative;
+	color: white;
 }
 
 #stacked
@@ -725,7 +745,9 @@ adminNamesList
 {
 	width: 12em;
 	border: 2px solid black;
-	margin-top: 20px;
+/*	margin-top: 20px; */
+	top: -1em;
+	position: relative;
 }
 
 #OneContact-form
@@ -1326,6 +1348,247 @@ font-size:1rem;
 	font-size: .6rem;
 }
 
+#screen
+{
+	flex-direction: column;
+}
 
+#list
+{
+	width: 100%;
+	flex-direction: column;
+	align-items: center;
+}
+
+#stacked
+{
+	padding: 10px;
+}
+
+#memberList
+{
+	margin-top:0;
+}
+
+
+#navbar
+{
+	position: relative;
+	height: 2.3em;
+}
+
+#mainMenu
+{
+	background-color:revert;
+	width: 100vw;
+	margin-left: 0;
+}
+
+#menuToggle
+{
+	display: block;
+	position: absolute;
+	top: 0px;
+	left: calc(100% - 50px);
+}
+
+/*
+ *
+ *   Copied hamburger menu CSS
+ *
+ */
+nav a,div 
+{
+	text-decoration: none;
+	color: lightgray;
+	transition: color 0.3s ease;
+}
+
+
+/*
+ * Just a quick hamburger
+ */
+
+#mainMenu 
+{
+  position: fixed;
+  right: 30px;
+  top: 10px;
+  z-index: 1000;
+}
+
+/* Hamburger Icon Styling */
+.hamburger 
+{
+  background: none;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 10px;
+  z-index: 1100;
+  position: relative;
+}
+
+.hamburger span 
+{
+  display: block;
+  width: 30px;
+  height: 3px;
+  background: #ffffff;
+  transition: 0.3s ease;
+}
+
+/* Morph Hamburger to "X" when open */
+.hamburger.active span:nth-child(1) { transform: translateY(9px) rotate(45deg); color: white; }
+.hamburger.active span:nth-child(2) { opacity: 0; }
+.hamburger.active span:nth-child(3) { transform: translateY(-9px) rotate(-45deg); color: white; }
+
+/* Main Sidebar Menu */
+#menu 
+{
+  position: fixed;
+  top: 60px;
+  right: -200px; /* Fully hidden */
+  width: 170px;
+  height: fit-content;
+  background: lightgray;
+  margin: 0;
+  padding: 5px;
+  list-style: none;
+  transition: right 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: -5px 0 15px rgba(0,0,0,0.1);
+}
+
+#menu.open 
+{
+  right: 0;
+}
+
+#menu ul li
+{
+	display: inherit;
+	margin-right: unset;
+}
+
+#menu li a
+{
+	margin-top: .5em;
+	margin-bottom: .5em;
+}
+
+/* Menu Items */
+.submenu 
+{
+  position: relative;
+  float: unset;
+  overflow: unset;
+  background-color: lightgray;
+  width: 100%;
+  display: inline-block;
+}
+
+.submenu .submenuButton
+{
+  display: block;
+  width: 100%;
+  padding-left: 35px;
+  padding-top: 0;
+  color: black;
+  text-decoration: none;
+  text-align: left;
+  background: none;
+  border: none;
+  font-size: 18px;
+  cursor: pointer;
+  transition: background 0.2s;
+  margin-left: 0;
+  margin-top: .5em;
+}
+
+.subMenuButton:hover 
+{
+  background: lightgray;
+}
+
+/* Submenu: Elevated Popup Style */
+.submenuContent 
+{
+  display: none;
+  position: absolute;
+  top: 0;
+  width: fit-content;
+  background: lightgray;
+  padding: 10px 0;
+  right: calc(-20px - 100%);
+  list-style: none;
+  
+  
+  /* High Elevation Shadow (Z-axis) */
+  box-shadow: -15px 15px 40px rgba(0, 0, 0, 0.4);
+  z-index: 1200;
+}
+
+.submenuContent.show 
+{
+  display: block;
+  animation: fadeIn 0.25s ease-out;
+  right: 0;
+}
+
+.submenuContent li
+{
+	display: inherit;
+	margin-right: unset;
+}
+
+.submenuContent a 
+{
+  display: block;
+/*  padding: 12px 20px; */
+  color: black;
+  text-decoration: none;
+}
+
+.submenuContent a:hover 
+{
+  background: lightgray;
+  text-decoration: underline;
+  font-weight: normal;
+
+}
+
+#gear
+{
+	margin-right:unset;
+	left: 3.5em;
+}
+
+#gear ~ .submenuContent
+{
+	left:unset;
+	width: fit-content;
+}
+
+#gearMenu
+{
+	float: unset;
+	height: 1.9em;
+	padding-top: .5em;
+}
+
+#gearMenu .submenuButton
+{
+	height: 1.9em;
+	top: -1.9em;
+	padding-top: 0;
+	position: relative;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateX(10px); }
+  to { opacity: 1; transform: translateX(0); }
+}
 
 }

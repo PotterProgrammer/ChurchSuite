@@ -300,12 +300,13 @@ sub allPendingMessages()
 	openDB();
 
 	print "Getting a list of all messages\n";
-	my $query = <<~ "ESQL";
-	   select m.rowid,m.status,m.sendOn,c.firstname,c.lastname,m.message
-	   from Messages as m inner join Contacts as c 
-	   on m.sendTo = c.rowid 
-	   where m.status = 'Pending'
-	   ESQL
+	my $query = << "ESQL";
+select m.rowid,m.status,m.sendOn,c.firstname,c.lastname,m.message
+from Messages as m inner join Contacts as c 
+on m.sendTo = c.rowid 
+where m.status = 'Pending'
+ESQL
+	
 	#
 	my $messageList = $dbh->selectall_arrayref( $query, {Slice => {}});
 	print "Got back " . Dumper( $messageList) . "\n";

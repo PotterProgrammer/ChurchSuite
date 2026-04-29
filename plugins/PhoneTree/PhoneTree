@@ -2,7 +2,7 @@
 
 use warnings;
 use strict;
-use v5.36.0;
+#use v5.36.0;
 
 use Data::Dumper;
 
@@ -33,7 +33,7 @@ my $backupPassphrase = 'ReesesPieces';
 	##  instances where a shutdown happened while
 	##  messages were being sent.)
 	##
-	Mojo::IOLoop->recurring( 60 => sub($bob)
+	Mojo::IOLoop->recurring( 60 => sub($)
 		{
 			if ( messagesArePending())
 			{
@@ -787,8 +787,9 @@ sub startMessenger()
 #  		Returns true if the name and password match the configured value for
 #  		the PhoneTree admin.
 #------------------------------------------------------------------------------
-sub isPhoneTreeAdmin( $user, $pwd)
+sub isPhoneTreeAdmin( $$)
 {
+	my ( $user, $pwd) = @_;
 	my %config = getConfigInfo();
 
 	return( ($user eq $config{PhoneTreeAdminLogin}) && ( $pwd eq $config{PhoneTreeAdminPWD}));
@@ -818,8 +819,9 @@ sub getPhoneTreeAdminUID()
 #------------------------------------------------------------------------------
 #	sub isPhoneTreeAdminUID( $id) 
 #------------------------------------------------------------------------------
-sub isPhoneTreeAdminUID( $id)
+sub isPhoneTreeAdminUID( $)
 {
+	my $id = shift( @_);
 	return( !( unpack( "%32W*", $id) % 42));
 }
 
