@@ -306,7 +306,7 @@ function updateMemberDialog( info)
 	}
 }
 
-window.addEventListener( "load", function() { refreshContactList() });
+window.addEventListener( "load", function() { refreshContactList(); refreshContactList(); });
 
 </script>
 

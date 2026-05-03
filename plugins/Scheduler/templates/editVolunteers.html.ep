@@ -7,6 +7,7 @@
 </head>
 
 <script src="scheduler.js"> </script>
+<script src="/common/loadNav.js"> </script>
 
 <script>
 
@@ -57,7 +58,7 @@
 	}
 	
 
-	window.addEventListener( "pageshow", function (){document.getElementById( "itemList").selectedIndex = 0; showVolunteerInfo();});
+	window.addEventListener( "pageshow", function (){document.getElementById( "itemList").selectedIndex = 0; showVolunteerInfo();showVolunteerInfo();});
 
 </script>
 

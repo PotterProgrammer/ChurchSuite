@@ -300,6 +300,7 @@ function deleteSelectedMessages()
 window.addEventListener( "DOMContentLoaded", function ()
 	{
 		getMessageList();
+		getMessageList();
 	});
 
 

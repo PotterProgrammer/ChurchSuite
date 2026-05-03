@@ -52,6 +52,8 @@ sub launch($$);
 
 		foreach my $messageToSend ( @$list)
 		{
+			print "Sending Message#$messageToSend->{rowid}\n";
+
 			##
 			##  Mark the message as being sent and launch a
 			##  background process to send it.
@@ -94,6 +96,7 @@ sub launch($$)
 #------------------------------------------------------------------------------
 sub sendAMessage($)
 {
+	print "In sendAMessage\n";
 	my $messageInfo = shift(@_);
 
 	my $rowId		= $messageInfo->{rowid};

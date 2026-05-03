@@ -16,7 +16,7 @@ nav a
 
 nav a:hover
 {
-	text-decoration:underline;
+	text-decoration: underline;
 }
 
 nav ul 
@@ -28,7 +28,7 @@ nav ul
 
 nav ul li 
 {
-    display: inline;
+  /*  display: inline; */
     margin-right: 20px;
 }
 
@@ -46,10 +46,17 @@ nav ul li a
     text-decoration: none;
 }
 
-nav ul li a:hover 
+/*nav ul li a:hover */
 {
     text-decoration: underline;
 }
+
+
+.hamburger
+{
+	display: none;
+}
+
 
 .submenu
 {
@@ -65,7 +72,11 @@ nav ul li a:hover
 	color: black;
 	background-color: lightgray;
 	font-family: inherit;
-	margin: 0;
+	margin-left: 2em;
+	margin-top: .125em;
+	width: fit-content;
+	margin-bottom: 0;
+	margin-right: 0;
 }
 
 
@@ -79,11 +90,6 @@ nav ul li a:hover
 	border-top: solid 1px #a0a0a0;
 	border-left: solid 1px gray;
 	border-right: solid 1px gray;
-}
-
-.submenu:hover .submenuContent
-{
-	display: block;
 }
 
 .submenuContent  a 
@@ -100,13 +106,262 @@ nav ul li a:hover
 	width:1.9em;
 	margin-top: 0;
 	top: 2px;
+	float: right;
+}
+
+#gearMenu
+{
+	float: right;
 }
 
 .rightEdge
 {
 	left: calc( 99.25vw - 11.5em);
 	width: 11em;
+	top: 2.45em;
 }
+
+@media (min-width: 901px)
+{
+.submenu:hover .submenuContent
+{
+	display: block;
+}
+}
+
+@media (max-width: 900px)
+{
+
+
+#navbar
+{
+	position: relative;
+	height: 2.3em;
+	background-color: revert;
+	margin: 0;
+	padding: 0;
+	width: unset;
+}
+
+#mainMenu
+{
+	background-color: revert;
+	width: 100vw;
+	margin-left: 0;
+}
+
+#menuToggle
+{
+	display: block;
+	position: absolute;
+	top: 0px;
+	left: calc(100% - 50px);
+}
+
+nav a img 
+{
+	top:0;
+}
+
+nav a,div 
+{
+	text-decoration: none;
+	color: lightgray;
+	transition: color 0.3s ease;
+}
+
+
+#mainMenu 
+{
+  position: fixed;
+  right: 30px;
+  top: 10px;
+  z-index: 1000;
+}
+
+/* Hamburger Icon Styling */
+.hamburger 
+{
+  background: none;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 10px;
+  z-index: 1100;
+  position: relative;
+  margin:0;
+}
+
+.hamburger span 
+{
+  display: block;
+  width: 30px;
+  height: 3px;
+  background: #ffffff;
+  transition: 0.3s ease;
+}
+
+/* Morph Hamburger to "X" when open */
+.hamburger.active span:nth-child(1) { transform: translateY(9px) rotate(45deg); color: white; }
+.hamburger.active span:nth-child(2) { opacity: 0; }
+.hamburger.active span:nth-child(3) { transform: translateY(-9px) rotate(-45deg); color: white; }
+
+/* Main Sidebar Menu */
+#menu 
+{
+  position: fixed;
+  top: 60px;
+  right: -200px; /* Fully hidden */
+  width: 170px;
+  height: fit-content;
+  background: lightgray;
+  margin: 0;
+  padding: 5px;
+  list-style: none;
+  transition: right 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: -5px 0 15px rgba(0,0,0,0.1);
+}
+
+#menu.open 
+{
+  right: 0;
+}
+
+#menu ul li
+{
+	display: inherit;
+	margin-right: unset;
+}
+
+#menu li a
+{
+	margin-top: .5em;
+	margin-bottom: .5em;
+}
+
+/* Menu Items */
+.submenu 
+{
+  position: relative;
+  float: unset;
+  overflow: unset;
+  background-color: lightgray;
+  width: 100%;
+  display: inline-block;
+}
+
+.submenu .submenuButton
+{
+  display: block;
+  width: 100%;
+  padding-left: 35px;
+  padding-top: 0;
+  color: black;
+  text-decoration: none;
+  text-align: left;
+  background: none;
+  border: none;
+  font-size: 18px;
+  cursor: pointer;
+  transition: background 0.2s;
+  margin-left: 0;
+  margin-top: .5em;
+}
+
+/*.subMenuButton:hover */
+{
+  background: lightgray;
+}
+
+/* Submenu: Elevated Popup Style */
+.submenuContent 
+{
+  display: none;
+  position: absolute;
+  top: 0;
+  width: fit-content;
+  background: lightgray;
+  padding: 10px 0;
+  right: calc(-20px - 100%);
+  list-style: none;
+  
+  
+  /* High Elevation Shadow (Z-axis) */
+  box-shadow: -15px 15px 40px rgba(0, 0, 0, 0.4);
+  z-index: 1200;
+}
+
+.submenuContent.show 
+{
+  display: block;
+  animation: fadeIn 0.25s ease-out;
+  right: 0;
+}
+
+.submenuContent li
+{
+	display: inherit;
+	margin-right: unset;
+}
+
+.submenuContent a 
+{
+  display: block;
+/*  padding: 12px 20px; */
+  color: black;
+  text-decoration: none;
+}
+
+/*.submenuContent a:hover */
+{
+  background: lightgray;
+  text-decoration: underline;
+  font-weight: normal;
+  display: unset;
+  visibility: 0;
+
+}
+
+
+#gear
+{
+	margin-right: unset;
+	left: 3.5em;
+	float: left;
+}
+
+#gear ~ .submenuContent
+{
+	left: unset;
+	width: fit-content;
+}
+
+#gearMenu
+{
+	float: unset;
+	height: 1.9em;
+	padding-top: .5em;
+	margin-top: 0px;
+}
+
+#gearMenu .submenuButton
+{
+	height: 1.9em;
+	top: -1.9em;
+	padding-top: 0;
+	position: relative;
+}
+
+@keyframes fadeIn 
+{
+  from { opacity: 0; transform: translateX(10px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+}
+
 
 </style>
 
@@ -114,52 +369,61 @@ nav ul li a:hover
 
 <nav id="mainMenu">
 	<a href="/scheduler/index"><img src="/scheduler/scheduler.png"></a>
-	<div class="submenu">
-		<button class="submenuButton">Positions⏷</button>
-		<div class="submenuContent" >
-			<a href="/scheduler/addSlots">Add Positions</a><br>
-			<a href="/scheduler/editSlots">Edit Positions</a><br>
-		</div>
-	</div>
-	<div class="submenu">
-		<button class="submenuButton">Volunteers⏷</button>
-		<div class="submenuContent" >
-			<a href="/scheduler/addVolunteer">Add Volunteers</a><br>
-			<a href="/scheduler/editVolunteers">Edit Volunteers</a><br>
-		</div>
-	</div>
-	<div class="submenu">
-		<button class="submenuButton">Schedule⏷</button>
-		<div class="submenuContent" >
-			<a href="/scheduler/buildSchedule">Generate Schedule</a><br>
-			<a href="/scheduler/showSchedule">View Schedule</a><br>
-		</div>
-	</div>
-	<div class="submenu">
-		<button class="submenuButton">Send⏷</button>
-		<div class="submenuContent">
-			<a href="/scheduler/requestUpdates">Send Info Update Requests</a><br>
-			<a href="/scheduler/sendSchedule">Send Schedules</a><br>
-			<a href="/scheduler/sendReminders">Send Weekly Reminders</a>
-		</div>
-	</div>
-	<div class="submenu">
-		<button class="submenuButton">Help⏷</button>
-		<div class="submenuContent">
-			<a onclick="showHelp()" >User's Manual</a><br>
-			<a href="/scheduler/about">About</a>
-		</div>
-	</div>
-	<div class="submenu" id="gearMenu">
-		<span class="submenuButton">
-			<img id="gear" src="/scheduler/images/gear64.png">
-		</span>
-		<div class="submenuContent rightEdge">
-			<a href="/scheduler/config">System Settings</a><br>
-			<a onclick="makeABackup();return false;" >Make Backup</a><br>
-			<a href="/scheduler/restore">Restore Backup</a><br>
-			<a href="/scheduler/enableAutomaticReminders">Automatic Reminders</a><br>
-			<a href="/scheduler/logoff">Log off</a>
-		</div>
+	<div id="menuToggle">
+		<ul id="menu">
+			<li class="submenu">
+				<button class="submenuButton" data-target="slotsSubmenu">Positions⏷</button>
+				<ul class="submenuContent" id="slotsSubmenu" >
+					<li><a href="/scheduler/addSlots">Add Positions</a></li>
+					<li><a href="/scheduler/editSlots">Edit Positions</a></li>
+				</ul>
+			</li>
+			<li class="submenu">
+				<button class="submenuButton" data-target="volunteerSubmenu">Volunteers⏷</button>
+				<ul class="submenuContent" id="volunteerSubmenu" >
+					<li><a href="/scheduler/addVolunteer">Add Volunteers</a></li>
+					<li><a href="/scheduler/editVolunteers">Edit Volunteers</a></li>
+				</ul>
+			</li>
+			<li class="submenu">
+				<button class="submenuButton" data-target="scheduleSubmenu">Schedule⏷</button>
+				<ul class="submenuContent" id="scheduleSubmenu" >
+					<li><a href="/scheduler/buildSchedule">Generate Schedule</a></li>
+					<li><a href="/scheduler/showSchedule">View Schedule</a></li>
+				</ul>
+			</li>
+			<li class="submenu">
+				<button class="submenuButton" data-target="sendSubmenu">Send⏷</button>
+				<ul class="submenuContent" id="sendSubmenu">
+					<li><a href="/scheduler/requestUpdates">Send Info Update Requests</a></li>
+					<li><a href="/scheduler/sendSchedule">Send Schedules</a></li>
+					<li><a href="/scheduler/sendReminders">Send Weekly Reminders</a></li>
+				</ul>
+			</li>
+			<li class="submenu">
+				<button class="submenuButton" data-target="helpSubmenu">Help⏷</button>
+				<ul class="submenuContent" id="helpSubmenu">
+					<li><a onclick="showHelp()" >User's Manual</a></li>
+					<li><a href="/scheduler/about">About</a></li>
+				</ul>
+			</li>
+			<li class="submenu" id="gearMenu">
+				<img id="gear" src="/scheduler/images/gear64.png">
+					<button class="submenuButton" data-target="systemSubmenu"></button>
+				</img>
+				<ul class="submenuContent rightEdge" id="systemSubmenu">
+					<li><a href="/scheduler/config">System Settings</a></li>
+					<li><a onclick="makeABackup();return false;" >Make Backup</a></li>
+					<li><a href="/scheduler/restore">Restore Backup</a></li>
+					<li><a href="/scheduler/enableAutomaticReminders">Automatic Reminders</a></li>
+					<li><a href="/scheduler/logoff">Log off</a></li>
+				</ul>
+			</li>
+		</ul>
+		<button class="hamburger" id="menuToggleButton">
+			<span></span>
+			<span></span>
+			<span></span>
+		</button>
 	</div>
 </nav>

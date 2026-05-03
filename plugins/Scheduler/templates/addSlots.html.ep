@@ -5,6 +5,7 @@
 	<link rel="stylesheet" href="site.css">
 </head>
 
+<script src="/common/loadNav.js"> </script>
 <script src="scheduler.js"> </script>
 <script src="Dialog.js"> </script>
 
@@ -128,39 +129,48 @@ window.addEventListener( "pageshow", refreshDisplay);
 
 <h1>Add Volunteer Positions</h1>
 
-<select name="slots" id="itemList" size="10" autofocus disabled>
-   %foreach my $slot (@{$slots})
-   %{
-   <option value="<%= $slot->{title} %>"><%= $slot->{title} %></option>
-   %}
-</select>
+<div id="volunteerScreen">
+	<div id="leftSide">
+	<label for="itemList" class="nameList">Current Positions:</label>
+		<div id="itemList" class="staticNameList" name="itemList">
+			<ul>
+			   %foreach my $slot (@{$slots})
+			   %{
+			   <li><%= $slot->{title} %></li>
+			   %}
+   			</ul>
+		</div>
+	</div>
 
-<div id="description">
+	<div id="rightSide">
+		<div id="description">
 
-	<label for="title">Position:</label>
-	<input type="text" id="title" name="title"></input>
-	<br>
-	<label for="dayNeeded">Day Needed:</label>
-	<select name="dayNeeded" id="dayNeeded">
-		<option value="Sunday">Sunday</option>
-		<option value="Monday">Monday</option>
-		<option value="Tuesday">Tuesday</option>
-		<option value="Wednesday">Wednesday</option>
-		<option value="Thursday">Thursday</option>
-		<option value="Friday">Friday</option>
-		<option value="Saturday">Saturday</option>
-	</select>
-	<br>
-	<label for="startTime">Start time for service needed:</label>
-	<input type="time" id="startTime" name="time"></input>
-	<br>
-	<label for="endTime">End time for service needed:</label>
-	<input type="time" id="endTime" name="endTime"></input>
-	<br>
-	<label for="count">Number of volunteers needed:</label>
-	<input type="number" id="count" name="count" min="1" max="20" step="1"></input>
-	<br>
-	<button type="button" onclick="saveEntry()">Save Position</button>
+			<label for="title">Position:</label>
+			<input type="text" id="title" name="title"></input>
+			<br>
+			<label for="dayNeeded">Day Needed:</label>
+			<select name="dayNeeded" id="dayNeeded">
+				<option value="Sunday">Sunday</option>
+				<option value="Monday">Monday</option>
+				<option value="Tuesday">Tuesday</option>
+				<option value="Wednesday">Wednesday</option>
+				<option value="Thursday">Thursday</option>
+				<option value="Friday">Friday</option>
+				<option value="Saturday">Saturday</option>
+			</select>
+			<br>
+			<label for="startTime">Start time for service needed:</label>
+			<input type="time" id="startTime" name="time"></input>
+			<br>
+			<label for="endTime">End time for service needed:</label>
+			<input type="time" id="endTime" name="endTime"></input>
+			<br>
+			<label for="count">Number of volunteers needed:</label>
+			<input type="number" id="count" name="count" min="1" max="20" step="1"></input>
+			<br>
+			<button type="button" onclick="saveEntry()">Save Position</button>
+		</div>
+	</div>
 </div>
 </body>
 

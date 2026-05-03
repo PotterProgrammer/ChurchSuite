@@ -1034,6 +1034,7 @@ sub findVolunteer($$);
 						##
 						if ( defined( $index))
 						{
+							print "\n\n*** Sending back info for $json->{name} ***\n\n";
 							$self->send( { json=> {	name => $Volunteers[$index]->{name},
 													email =>$Volunteers[$index]->{email},
 													phone => $Volunteers[$index]->{phone}, 

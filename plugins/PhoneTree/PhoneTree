@@ -770,7 +770,6 @@ my $backupPassphrase = 'ReesesPieces';
 #------------------------------------------------------------------------------
 sub startMessenger()
 {
-	return;
 	print "*****************************\n";
 	print "  Starting the messenger...\n";
 	print "*****************************\n";

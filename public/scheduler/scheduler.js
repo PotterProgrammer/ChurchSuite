@@ -4,22 +4,57 @@
 
 //-->import {Dialog} from './Dialog.js';
 
+//-->//==============================================================================
+//-->//  function loadNavbar()
+//-->//==============================================================================
+//-->function loadNavbar()
+//-->{
+//-->    fetch('/scheduler/navBar.html')
+//-->       .then(response => response.text())
+//-->       .then(data => {
+//-->            document.getElementById('navbar').innerHTML = data;
+//-->        });
+//-->}
+
+
 //==============================================================================
-//  function loadNavbar()
+//  function issueWebsocketQuery( url, msg)
 //==============================================================================
-function loadNavbar()
+function issueWebsocketQuery( url, msg)
 {
-    fetch('/scheduler/navBar.html')
-       .then(response => response.text())
-       .then(data => {
-            document.getElementById('navbar').innerHTML = data;
-        });
+	return new Promise((resolve, reject) =>
+		{
+			var ws;
+			ws = new WebSocket( url);
+
+			ws.onopen = (event) => 
+			{
+				ws.send( msg);
+			};
+
+			ws.onerror = (event) =>
+			{
+				ws.close();
+				ws = new WebSocket( url);
+				ws.onopen = (event) => 
+				{
+					ws.send( msg);
+				};
+			};
+
+			ws.onmessage = (msg) =>
+			{
+				let reply = JSON.parse( msg.data);
+				resolve( reply);
+			};
+		}
+	);
 }
 
 //==============================================================================
-//  function showVolunteerInfo()
+//  function old_showVolunteerInfo()
 //==============================================================================
-function showVolunteerInfo()
+function old_showVolunteerInfo()
 {
 	//
 	//  Call server to get info for the current position
@@ -30,6 +65,9 @@ function showVolunteerInfo()
 	{
 		var selectedItemNumber = volunteerList.selectedIndex;
 		var itemName = volunteerList.options[selectedItemNumber].value;
+//-->		var msg = JSON.stringify( { "index" :selectedItemNumber, "name": itemName});
+		let msg = JSON.stringify( { "index" :selectedItemNumber, "name": itemName});
+
 		var url = 'ws://' + window.location.host + '/scheduler/getVolunteerInfo';
 		var ws;
 
@@ -39,7 +77,6 @@ function showVolunteerInfo()
 		}
 
 		ws = new WebSocket( url);
-		var msg = JSON.stringify( { "index" :selectedItemNumber, "name": itemName});
 
 		ws.onopen = (event) => 
 		{
@@ -126,7 +163,6 @@ function showVolunteerInfo()
 						pos.setAttribute( "value", date);
 						dayList.appendChild( pos);
 					});
-				dayList.style.width = "7em";
 			}
 			else
 			{
@@ -135,7 +171,6 @@ function showVolunteerInfo()
 				pos.appendChild( posText);
 				pos.setAttribute( "value", "-none-");
 				dayList.appendChild( pos);
-				dayList.style.width = "6.5em";
 			}
 			dayList.size = Math.min( 3, dayList.length);
 
@@ -167,7 +202,6 @@ function showVolunteerInfo()
 						pos.setAttribute( "value", date);
 						dayList.appendChild( pos);
 					});
-				dayList.style.width = "6.5em";
 			}
 			else
 			{
@@ -176,7 +210,6 @@ function showVolunteerInfo()
 				pos.appendChild( posText);
 				pos.setAttribute( "value", "-none-");
 				dayList.appendChild( pos);
-				dayList.style.width = "4em";
 			}
 			dayList.size = Math.min( 3, dayList.length);
 
@@ -184,6 +217,158 @@ function showVolunteerInfo()
 		};
 	}
 }
+
+//==============================================================================
+//  function showVolunteerInfo()
+//==============================================================================
+function showVolunteerInfo()
+{
+	//
+	//  Call server to get info for the current position
+	//
+	var volunteerList = document.getElementById( "itemList");
+
+	if ( volunteerList != null)
+	{
+		let selectedItemNumber = volunteerList.selectedIndex;
+		let itemName = volunteerList.options[selectedItemNumber].value;
+		let msg = JSON.stringify( { "index" :selectedItemNumber, "name": itemName});
+
+		let url = 'ws://' + window.location.host + '/scheduler/getVolunteerInfo';
+
+		if ( window.location.protocol == 'https:')
+		{
+			url = 'wss://' + window.location.host + '/scheduler/getVolunteerInfo';
+		}
+
+		issueWebsocketQuery( url, msg)
+			.then( (reply) =>
+				{
+					document.getElementById('name').value = reply.name;
+					document.getElementById('email').value = reply.email;
+					document.getElementById('phone').value = reply.phone;
+
+					//
+					//  Set the preferred contact
+					//
+					var contactMethod = document.getElementById( 'contactMethod');
+					while( contactMethod.options.length > 0)
+					{
+						contactMethod.remove(0);
+					}
+
+					var contactOption = document.createElement('option');
+					var contactText = document.createTextNode( reply.contact);
+					contactOption.appendChild( contactText);
+					contactOption.setAttribute( "value", reply.contact);
+					contactMethod.appendChild( contactOption);
+
+					//
+					//  Clear current positions listed
+					//
+					var positions = document.getElementById('positions');
+					while( positions.options.length > 0)
+					{
+						positions.remove(0);
+					}
+
+					var list = reply.desiredRoles.replace(/,$/, '').split( ",");
+
+					list.forEach( (role) => 
+						{
+							var pos = document.createElement('option');
+							var posText = document.createTextNode( role);
+							pos.appendChild( posText);
+							pos.setAttribute( "value", role);
+							pos.setAttribute( "selected", true);
+							positions.appendChild( pos);
+						});
+					positions.size = Math.min( 3, positions.length);
+					
+					//
+					//  Clear current days unavailable listed
+					//
+					var dayListLabel = document.getElementById('daysUnavailableLabel');
+					dayListLabel.title = 'Days that ' + reply.name + ' will be unvailable to serve.';
+					var dayList = document.getElementById('daysUnavailable');
+					dayList.title = 'Days that ' + reply.name + ' will be unavailable to serve.';
+					while( dayList.options.length > 0)
+					{
+						dayList.remove(0);
+					}
+
+					//
+					//  Set days unavailable
+					//
+					if ( reply.daysUnavailable != null)
+					{
+						list = reply.daysUnavailable.replace(/,$/, "").split( ",");
+
+						list.forEach( (date) => 
+							{
+								var pos = document.createElement('option');
+								var posText = document.createTextNode( date);
+								pos.appendChild( posText);
+								pos.setAttribute( "value", date);
+								pos.setAttribute( "selected", true);
+								dayList.appendChild( pos);
+							});
+					}
+					else
+					{
+						var pos = document.createElement('option');
+						var posText = document.createTextNode( '-none-');
+						pos.appendChild( posText);
+						pos.setAttribute( "value", "-none-");
+						pos.setAttribute( "selected", true);
+						dayList.appendChild( pos);
+					}
+					dayList.size = Math.min( 3, dayList.length);
+
+
+					//
+					//  Clear current days desired listed
+					//
+					dayListLabel = document.getElementById('daysDesiredLabel');
+					dayListLabel.title = 'Days that ' + reply.name + ' specifically asked to be chosen.';
+					dayList = document.getElementById('daysDesired');
+					dayList.title = 'Days that ' + reply.name + ' specifically asked to be chosen.';
+					while( dayList.options.length > 0)
+					{
+						dayList.remove(0);
+					}
+
+					//
+					//  Set days desired
+					//
+					if ( reply.daysDesired != null)
+					{
+						list = reply.daysDesired.replace(/,$/, "").split( ",");
+
+						list.forEach( (date) => 
+							{
+								var pos = document.createElement('option');
+								var posText = document.createTextNode( date);
+								pos.appendChild( posText);
+								pos.setAttribute( "value", date);
+								pos.setAttribute( "selected", true);
+								dayList.appendChild( pos);
+							});
+					}
+					else
+					{
+						var pos = document.createElement('option');
+						var posText = document.createTextNode( '-none-');
+						pos.appendChild( posText);
+						pos.setAttribute( "value", "-none-");
+						pos.setAttribute( "selected", true);
+						dayList.appendChild( pos);
+					}
+					dayList.size = Math.min( 3, dayList.length);
+				});
+	}
+}
+
 
 //==============================================================================
 //  function saveVolunteerInfo( volunteer, callback)
@@ -361,40 +546,40 @@ function hideNavbar()
 	document.getElementById('navbar').hidden = true;
 }
 
-//==============================================================================
-//  function makeABackup()
-//		This function calls the server to make a backup and then provides a
-//		download link.
-//==============================================================================
-function makeABackup()
-{
-	if ( !("WebSocket" in window))
-	{
-		alert('This browser does not support WebSockets!');
-		return;
-	}
+//-->//==============================================================================
+//-->//  function makeABackup()
+//-->//		This function calls the server to make a backup and then provides a
+//-->//		download link.
+//-->//==============================================================================
+//-->function makeABackup()
+//-->{
+//-->	if ( !("WebSocket" in window))
+//-->	{
+//-->		alert('This browser does not support WebSockets!');
+//-->		return;
+//-->	}
+//-->
+//-->	ws = new WebSocket("/scheduler/backup");
+//-->	ws.onopen = function()
+//-->	{
+//-->		ws.send( "Backup");
+//-->	};
+//-->
+//-->	ws.onmessage = async function (evt)
+//-->	{
+//-->		var data = evt.data;
+//-->		const response = await fetch( "/" + data);
+//-->		const blob = await response.blob();
+//-->
+//-->		var anchor = document.createElement('a');
+//-->		anchor.href = window.URL.createObjectURL( blob);
+//-->		anchor.download = data;
+//-->		anchor.click();
+//-->		anchor.remove();
+//-->		window.location.href = "/scheduler/cleanBackup";
+//-->
+//-->	}
+//-->}
 
-	ws = new WebSocket("/scheduler/backup");
-	ws.onopen = function()
-	{
-		ws.send( "Backup");
-	};
-
-	ws.onmessage = async function (evt)
-	{
-		var data = evt.data;
-		const response = await fetch( "/" + data);
-		const blob = await response.blob();
-
-		var anchor = document.createElement('a');
-		anchor.href = window.URL.createObjectURL( blob);
-		anchor.download = data;
-		anchor.click();
-		anchor.remove();
-		window.location.href = "/scheduler/cleanBackup";
-
-	}
-}
-
-window.addEventListener( "pageshow", loadNavbar);
+//-->window.addEventListener( "pageshow", loadNavbar);
 //-->export { loadNavbar,showVolunteerInfo,saveVolunteerInfo,showAddedAlert,showHelp,hideEditDates,showEditDates,hideEditSchedule,showEditSchedule,hideConfirmSave,showConfirmSave,hideConfirmDelete,showConfirmDelete,hideNavbar}

@@ -5,6 +5,7 @@
 	<link rel="stylesheet" href="site.css">
 </head>
 
+<script src="/common/loadNav.js"> </script>
 <script src="scheduler.js"> </script>
 <script src="Dialog.js"> </script>
 
@@ -182,6 +183,7 @@
 	function refreshDisplay()
 	{
 		document.getElementById('itemList').selectedIndex = 0;
+		showPosition();
 		showPosition();
 	}
 

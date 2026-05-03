@@ -1392,11 +1392,6 @@ font-size:1rem;
 	left: calc(100% - 50px);
 }
 
-/*
- *
- *   Copied hamburger menu CSS
- *
- */
 nav a,div 
 {
 	text-decoration: none;
@@ -1404,10 +1399,6 @@ nav a,div
 	transition: color 0.3s ease;
 }
 
-
-/*
- * Just a quick hamburger
- */
 
 #mainMenu 
 {

@@ -7,6 +7,7 @@
 </head>
 
 <script src="/scheduler/scheduler.js"> </script>
+<script src="/common/loadNav.js"> </script>
 <script src="/scheduler/Dialog.js"></script>
 
 <script>

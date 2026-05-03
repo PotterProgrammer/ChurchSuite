@@ -83,6 +83,24 @@ option:checked {
 	margin-right: .5em;
 }
 
+#volunteerScreen
+{
+	display: flex;
+	flex-direction: row;
+	gap: 2em;
+}
+
+#leftSide
+{
+	flex: 1;
+	padding-top: 1em;
+}
+
+#rightSide
+{
+	flex: 2;
+}
+
 .nameList, #itemList
 {
 	margin-left: 5vw;
@@ -91,15 +109,46 @@ option:checked {
 	width: 15em;
 }
 
+#itemList.staticNameList
+{
+	margin-left: 5vw;
+	margin-top: 5px;
+	font-size: 14pt;
+	width: 15em;
+	height: 22em;
+	background-color: white;
+	color: black;
+	overflow-y: scroll;
+}
+
+.staticNameList::-webkit-scrollbar {
+  -webkit-appearance: none;
+  width: 10px; /* Essential: must set a width/height to override OS defaults */
+}
+
+.staticNameList::-webkit-scrollbar-thumb {
+  background-color: rgba(0, 0, 0, 0.5); /* Make the "dragger" visible */
+  border-radius: 5px;
+}
+
+.staticNameList::-webkit-scrollbar-track {
+  background: #f1f1f1; /* Ensure the track is visible */
+}
+.staticNameList ul
+{
+	list-style: none;
+	margin-top: 0;
+}
+
 #addUserDescription
 {
 	position: relative;
 	margin-top: -1em;
-	float: right;
 	min-width: 40%;
 	margin-right: 5vw;
 	line-height: 2.5;
 	height: 80%;
+	margin-left: 1em;
 }
 
 
@@ -112,6 +161,18 @@ option:checked {
 	margin-right: 5vw;
 	line-height: 2.5;
 	height: 80%;
+}
+
+#daysDesired, #daysUnavailable
+{
+	width: 8em;
+}
+
+.editButton
+{
+	margin-top: 0;
+	margin-right: 0;
+	margin-bottom: 0;
 }
 
 #userInfo
@@ -159,6 +220,13 @@ fieldset,#dateEntry
 	text-align: center;
 	line-height:200%;
 }
+
+#deleteDateButton
+{
+	width: 20em;
+	font-size: 90%;
+}
+
 
 #overlay
 {
@@ -572,4 +640,115 @@ fieldset,#dateEntry
 	margin-right:0;
 }
 
+@media (max-width:900px)
+{
+#addUserDescription
+{
+	margin-left: 1em;
+}
 
+#daysUnavailableLabel
+{
+	font-size: 0;
+}
+
+#daysUnavailableLabel:before
+{
+	content: "Unavailable:";
+	font-size: 14pt; 
+}
+
+#daysDesiredLabel
+{
+	font-size: 0;
+}
+
+#daysDesiredLabel:before
+{
+	content: "Desires:";
+	font-size: 14pt; 
+}
+
+
+#dateEdit
+{
+	left: unset;
+	right: unset;
+	width: 98vw;
+	margin-left: .5vw;
+}
+.dateList
+{
+	width: 4.8em;
+}
+
+#viewSchedule
+{
+	margin-left: 0;
+	margin-right:0;
+	width: 100%;
+}
+
+#genSchedule
+{
+	margin-left: .5em;
+	width: 100%;
+}
+
+.cfgHead
+{
+	padding-left: .5em;
+}
+
+.cfgLeft
+{
+	padding-left: 1em;
+}
+
+.cfginput
+{
+	width: fit-content;
+}
+
+#buttonRow
+{
+	width: fit-content;
+	padding-bottom: 40px;
+}
+
+#deleteDateButton
+{
+	width: fit-content;
+	padding-left: 1em;
+	padding-right: 1em;
+	font-size: 90%;
+}
+
+.dateList
+{
+	width: fit-content;
+	min-width: 5.5em;
+}
+
+#added
+{
+	width: fit-content;
+	padding-left: .5em;
+	padding-right: .5em;
+}
+
+#volunteerScreen
+{
+	flex-direction:column;
+	gap: 10px;
+}
+
+#itemList.staticNameList
+{
+	height:10em;
+}
+
+
+
+
+}

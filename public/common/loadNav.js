@@ -55,7 +55,7 @@ function setUpHamburger()
 			const targetMenu = document.getElementById(targetId);
 
 			// Close other submenus first
-			document.querySelectorAll('.submenu').forEach(sub => {
+			document.querySelectorAll('.submenuContent').forEach(sub => {
 				if (sub !== targetMenu)
 				{
 					sub.classList.remove('show');
