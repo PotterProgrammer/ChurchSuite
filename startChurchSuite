@@ -44,4 +44,6 @@ while [[ $# -gt 0 ]]; do
 done
 
 export CHURCH_SUITE_PORT
+export PATH=.:$PWD/local/bin:$PATH
+export PERL5LIB=$PWD/local/lib/perl5:$PERL5LIB
 hypnotoad launch

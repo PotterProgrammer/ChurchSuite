@@ -2,4 +2,6 @@
 #------------------------------------------------------------------------------
 #  A Basic script to shutdown the ChurchSuite service
 #------------------------------------------------------------------------------
+export PATH=.:$PWD/local/bin:$PATH
+export PERL5LIB=$PWD/local/lib/perl5:$PERL5LIB
 hypnotoad -s launch
