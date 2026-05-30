@@ -1142,12 +1142,12 @@ sub findVolunteer($$);
 					{
 						my ($self, $json) = @_;
 
-					print "Dump:\n";
-						foreach my $key (keys( %{$json}))
-						{
-							print "Key: $key => " . $json->{$key} . "\n";
-						}
-						print "$json->{enabled}\n";
+##-->					print "Dump:\n";
+##-->						foreach my $key (keys( %{$json}))
+##-->						{
+##-->							print "Key: $key => " . $json->{$key} . "\n";
+##-->						}
+##-->						print "$json->{enabled}\n";
 						if ( $json->{enabled} == 1)
 						{
 							my $weekday = $json->{weekday};

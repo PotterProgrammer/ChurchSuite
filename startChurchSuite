@@ -1,0 +1,47 @@
+#!/bin/bash
+#------------------------------------------------------------------------------
+#  A Basic script to launch the ChurchSuite service
+#------------------------------------------------------------------------------
+CHURCH_SUITE_PORT=3000
+
+function usage()
+{
+	cat  << 'EOH'
+
+    startChurchSuite -- Script to launch the ChurchSuite server
+
+    usage:  startChurchSuite [--port portNum] [--help]
+
+    where:
+       portNum   is the port number that the server will listen to. The default
+                 is port 3000.
+
+       help      displays this message.
+
+EOH
+	exit -1;
+}
+
+while [[ $# -gt 0 ]]; do
+	case "$1" in
+		-h|--help)
+			usage
+			;;
+	    -p|--port)
+			if [[ $2 -gt 1 ]]; then
+				CHURCH_SUITE_PORT=$2;
+				shift 2
+			else
+				echo "Invalid value for '$1'  ($2)!"
+				usage
+			fi
+			;;
+		-*)
+			echo "Unknown option `$1`"
+			usage
+			;;
+	esac
+done
+
+export CHURCH_SUITE_PORT
+hypnotoad launch

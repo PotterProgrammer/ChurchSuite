@@ -1,0 +1,32 @@
+#!/bin/bash
+#------------------------------------------------------------------------------
+#  A Basic script to restart the ChurchSuite service
+#------------------------------------------------------------------------------
+function usage()
+{
+	cat  << 'EOH'
+
+    restartChurchSuite -- Script to restart a running ChurchSuite server
+
+    usage:  restartChurchSuite [--help]
+
+	This script is used to update a running server whenever an update has been
+	made to the server
+
+
+EOH
+	exit -1;
+}
+
+while [[ $# -gt 0 ]]; do
+	case "$1" in
+		-h|--help)
+			usage
+			;;
+		-*)
+			echo "Unknown option `$1`"
+			usage
+			;;
+	esac
+done
+hypnotoad  launch

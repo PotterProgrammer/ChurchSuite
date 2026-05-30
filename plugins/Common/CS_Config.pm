@@ -166,7 +166,6 @@ sub loadConfig()
 				if ( m/TwilioGender=(.*)/)
 				{
 					$TwilioGender=$1;
-				print "\n\n\n *** TwilioGender is $TwilioGender!\n\n";
 					next;
 				}
 				if ( m/TwilioIntro=(.*)/)

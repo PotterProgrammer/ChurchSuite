@@ -12,12 +12,14 @@ use strict;
 use lib "./";
 
 use Mojolicious::Lite;
-use Getopt::Long;
 
 #main:
 {
 	my $port = 3000;
-	GetOptions( "port=i" => \$port);
+	if ( defined( $ENV{'CHURCH_SUITE_PORT'}))
+	{
+		$port = int( $ENV{'CHURCH_SUITE_PORT'});
+	}
 
 	opendir( my $dir, './plugins') || die "Can't find the plugins! $!\n";
 	while( my $filename = readdir $dir)
@@ -37,7 +39,7 @@ use Getopt::Long;
 
 	}
 
-##-->	app->config( hypnotoad=>{listen =>['http://*:3000']});
+	app->config( hypnotoad=>{listen =>["http://*:$port"]});
 	
 	app->secrets( ['Your mileage may vary']);
 	app->start;
