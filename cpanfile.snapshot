@@ -1,5 +1,24 @@
 # carton snapshot format: version 1.0
 DISTRIBUTIONS
+  DBD-SQLite-1.78
+    pathname: I/IS/ISHIGAKI/DBD-SQLite-1.78.tar.gz
+    provides:
+      DBD::SQLite 1.78
+      DBD::SQLite::Constants undef
+      DBD::SQLite::GetInfo undef
+      DBD::SQLite::VirtualTable 1.78
+      DBD::SQLite::VirtualTable::Cursor 1.78
+      DBD::SQLite::VirtualTable::FileContent undef
+      DBD::SQLite::VirtualTable::FileContent::Cursor undef
+      DBD::SQLite::VirtualTable::PerlData undef
+      DBD::SQLite::VirtualTable::PerlData::Cursor undef
+    requirements:
+      DBI 1.57
+      ExtUtils::MakeMaker 0
+      File::Spec 0.82
+      Test::More 0.88
+      Tie::Hash 0
+      perl 5.006
   DBI-1.647
     pathname: H/HM/HMBRAND/DBI-1.647.tgz
     provides:
