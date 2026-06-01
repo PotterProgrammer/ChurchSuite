@@ -208,20 +208,19 @@ function refreshContactList()
 {
 	let select = document.getElementById( 'memberList');
 
-	//
-	//  First clear the list
-	//
-	while( select.options.length > 0)
-	{
-		select.remove(0);
-	}
-
 	readGroupList().then( () => 
 		{
 	readContactList()
 					.then(( list) =>
 						{
 							let select = document.getElementById( 'memberList');
+							//
+							//  First clear the list
+							//
+							while( select.options.length > 0)
+							{
+								select.remove(0);
+							}
 
 							list.forEach( (row) =>
 								{
@@ -306,7 +305,7 @@ function updateMemberDialog( info)
 	}
 }
 
-window.addEventListener( "load", function() { refreshContactList(); refreshContactList(); });
+window.addEventListener( "load", function() { refreshContactList(); });
 
 </script>
 
